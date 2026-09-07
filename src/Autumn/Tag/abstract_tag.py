@@ -1,7 +1,6 @@
 import abc
 import copy
-import gc
-import inspect
+from inspect import isclass
 import threading
 from warnings import warn
 
@@ -59,9 +58,9 @@ class AbstractTag(AbstractBase, abc.ABC):
 
             self.preferred_parent = default
 
-        self.dynamic = getattr(self, "dynamic", False) or any(  # type: ignore[annotation-unchecked]
-            tag.dynamic if isinstance(tag, AbstractTag) else False for tag in self.tags
-        )  # type: Ignore
+        self.dynamic = getattr(self, "dynamic", False) or any(  # type: ignore[annotation-unchecked,unused-ignore]
+            tag.dynamic if isinstance(tag, AbstractTag) else False for tag in self.tags  # type: ignore[has-type]
+        )
 
     def identifiers(self):
         """
@@ -358,7 +357,7 @@ class AbstractTag(AbstractBase, abc.ABC):
         :param item: a class for instance check or an instance for literal check.
         :return: True or False.
         """
-        if inspect.isclass(item):
+        if isclass(item):
             if issubclass(item, AbstractTag):
                 return any(issubclass(type(i), item) for i in self.tags)
         return item in self.tags

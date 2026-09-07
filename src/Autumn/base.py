@@ -1,20 +1,15 @@
 import copy
-import inspect
 import threading
-from collections.abc import Callable
+from contextvars import ContextVar
 from warnings import warn
+
+from werkzeug.local import LocalProxy
 
 from Autumn.Page.page_manager import PageManager
 from Autumn.Style import StyleManager
 from Autumn.Tag import TagManager
-from .Naming import Naming
-
-from contextvars import ContextVar
-
 from Autumn.exceptions import ContextError
-from werkzeug.local import LocalProxy
-
-from .abstract_base import AbstractBase
+from .Naming import Naming
 
 
 class Dummy:
