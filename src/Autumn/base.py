@@ -190,19 +190,18 @@ class Base:
                 base._notify_extensions_of_exception(instance=self_, exception=e, args=args, kwargs=kwargs)
                 raise
 
-        def getattribute(self_, item):
-            value = object.__getattribute__(self_, item)
+        for i, j in cls.__dict__.items():
 
-            if not inspect.isroutine(value) or \
-                item.startswith("_") or \
-                item in ["build", "identifiers", "duplicate_identifiers"]:
-                return value
+            if i in ["__new__", "__init__",
+                     "__getattribute__", "__setattr__",
+                     "__dict__", "__doc__", "__module__",
+                     "__weakref__"]:
+                continue
 
-            def out(*args, **kwargs):
+            def out(self_, *args, _autumn_func=j, **kwargs):
                 try:
-                    return value(*args, **kwargs)
+                    return _autumn_func(self_, *args, **kwargs)
                 except Exception as e:
-                    base: Base = None  # type: ignore[assignment]
                     if hasattr(self_, "__class__"):
                         base: Base = type(self_).__autumn_base__
                     else:
@@ -210,10 +209,9 @@ class Base:
                     base._notify_extensions_of_exception(instance=self_, exception=e, args=args, kwargs=kwargs)
                     raise
 
-            return out
+            setattr(cls, i, out)
 
         cls.__init__ = init
-        cls.__getattribute__ = getattribute
 
         cls._wrapped_with_autumn_base_ctrl = True
         cls.__autumn_base__ = self
