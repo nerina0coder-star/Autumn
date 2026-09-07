@@ -1,6 +1,7 @@
 /build.*
 /test_projects
 __pycache__
+/dist
 /docs
 /.venv
 /.idea
