@@ -1,6 +1,7 @@
 import copy
 import threading
 from contextvars import ContextVar
+from inspect import isroutine
 from warnings import warn
 
 from werkzeug.local import LocalProxy
@@ -191,6 +192,9 @@ class Base:
                      "__getattribute__", "__setattr__",
                      "__dict__", "__doc__", "__module__",
                      "__weakref__"]:
+                continue
+
+            if not isroutine(j):
                 continue
 
             def out(self_, *args, _autumn_func=j, **kwargs):
