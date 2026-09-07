@@ -20,7 +20,7 @@ HTML page identical to a simple O(1) for a simple list lookup.
 ### Installing
 
 The project is available in PyPI as autumn-core, so installing it is as simple as a:
-```commandline
+```shell
 cd /path/to/new/project
 python3 -m venv .venv
 .venv/bin/pip install autumn-core # or .venv/Scripts/pip for windows
