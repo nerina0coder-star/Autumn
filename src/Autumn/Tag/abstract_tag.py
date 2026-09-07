@@ -82,6 +82,7 @@ class AbstractTag(AbstractBase, abc.ABC):
     def duplicate_identifiers(self):
         """
         Catches duplicate identifiers.
+
         :return: The duplicates.
         """
 
@@ -118,6 +119,7 @@ class AbstractTag(AbstractBase, abc.ABC):
     def build(self, cache_if_possible = True, /, **kwargs) -> str:
         """
         Builds the tag and all sub tags.
+
         :param cache_if_possible: If true, the returned value will be cached if this tag is not dynamic.
         :param kwargs: The kwargs to pass to all sub tags.
         :return: The built tag.
@@ -196,12 +198,19 @@ class AbstractTag(AbstractBase, abc.ABC):
     def _new(self):
         """
         Used when trying to create a new instance from the class of this instance.
+
         :return: A new tag, exactly like self.
         """
 
         return copy.deepcopy(self)
 
-    def __mul__(self, other: int):
+    def __mul__(self, other):
+        """
+        Multiplies this tag by `other` times.
+
+        :param other: An int to multiply self by.
+        :return: A list or the preferred parent.
+        """
         if not isinstance(other, int):
             raise TypeError(f"Expected int, but given {type(other).__name__}")
 
@@ -216,9 +225,20 @@ class AbstractTag(AbstractBase, abc.ABC):
         return parent
 
     def __rmul__(self, other):
+        """
+        Same as tag * other.
+
+        :param other: An int to multiply self by.
+        :return: The result of the multiplication.
+        """
         return self * other
 
     def __add__(self, other: "AbstractTag | list[AbstractTag]"):
+        """
+        Adds together the given tags.
+        :param other: The others to join.
+        :return: The self + other(prepended) in a list or the preferred parent.
+        """
         out = None
 
         if isinstance(other, AbstractTag):
@@ -231,19 +251,45 @@ class AbstractTag(AbstractBase, abc.ABC):
         return out
 
     def __radd__(self, other):
+        """
+        Same as self + other, but reversed.
+        :param other: The other to join.
+        :return: The other + self(appended) in a list or the preferred parent.
+        """
         self._reverse_addition = True
         return self + other
 
     def __lshift__(self, other):
+        """
+        Puts other in self(append).
+        :param other: The one to put in self's tags.
+        :return: Self, for chaining operations.
+        """
         self.tags.append(other)
         return self
 
     def __rrshift__(self, other):
+        """
+        Same as self << other.
+        :param other: The one to put in self's tags.
+        :return: Self, for chaining operations.
+        """
         return self << other
 
     def __sub__(self, other):
         """
-        :return: The ones not removed.
+        Removes the given other from the tags. The given other can be
+        a type of AbstractTag, or a list of type of AbstractTags.
+        This function will remove instances of the other in order from end to start,
+        one for each class.
+
+        Example:
+            where tags = sequence of div1, div2, div3, p1, p2, span1, div4, span2
+            where tags is my_tag.tags
+            when my_tag - [Div, Div, Span, P]
+            changed tags to sequence of div1, div2, p1, span1
+
+        :return: The ones not removed, for any reasons.
         """
         if isinstance(other, type):
             other = [other]
@@ -257,30 +303,61 @@ class AbstractTag(AbstractBase, abc.ABC):
                 other.remove(type(tag))
             return allowed
 
-        new = list(filter(do, reversed(self.tags)))
+        new = list(reversed(
+            list(filter(do, reversed(self.tags)))
+        ))
         self.tags = new
 
         return other
 
     def __eq__(self, other):
+        """
+        Checks if worth of self is equal to the other or the other's worth.
+
+        :param other: Int, Float, or AbstractTag.
+        :return: True or False.
+        """
         return self.worth == (other.worth if isinstance(other, AbstractTag) else other)
 
     def __ne__(self, other):
+        """
+        Same as not self == other.
+        """
         return not self == other
 
     def __lt__(self, other):
+        """
+        Checks if worth of self is less than the other or the other's worth.
+
+        :param other: Int, Float, or AbstractTag.
+        :return: True or False.
+        """
         return self.worth < (other.worth if isinstance(other, AbstractTag) else other)
 
     def __gt__(self, other):
+        """
+        Same as not (self < other or self == other)
+        """
         return self.worth > (other.worth if isinstance(other, AbstractTag) else other)
 
     def __le__(self, other):
+        """
+        Same as self < other or self == other
+        """
         return self < other or self == other
 
     def __ge__(self, other):
+        """
+        Same as self > other or self == other
+        """
         return self > other or self == other
 
     def __contains__(self, item):
+        """
+        Checks if item or any instance of it is in self.tags.
+        :param item: a class for instance check or an instance for literal check.
+        :return: True or False.
+        """
         if inspect.isclass(item):
             if issubclass(item, AbstractTag):
                 return any(issubclass(type(i), item) for i in self.tags)
@@ -289,7 +366,7 @@ class AbstractTag(AbstractBase, abc.ABC):
     def _resolve_parent(self, lst):
         """
         Does NOT hold the lock, assuming it is already held.
-        Resolves a parent after an arithmetic operation(mul/add)
+        Resolves a parent after an arithmetic operation(e.g., mul/add).
         """
 
         if isinstance((parent := self.preferred_parent()), AbstractTag):
