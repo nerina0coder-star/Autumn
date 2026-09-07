@@ -18,6 +18,7 @@ class Page(AbstractBase):
     def __init__(self, name: str, /, *, direction: Literal["ltr", "rtl", "auto"] = "auto", language: Language | str = "en"):
         """
         Initializes a new page object.
+
         :param name: The name of the page.
         :param direction: The direction of the page.
         :param language: The language of the page.
@@ -35,6 +36,7 @@ class Page(AbstractBase):
     def require(self, cdn: list[Cdn] | Cdn, /) -> "Page":
         """
         Requires CDN URL(s) for this specific page.
+
         :param cdn: The CDN URL(s).
         :return: This instance for chaining operations.
         """
@@ -44,6 +46,7 @@ class Page(AbstractBase):
     def tag(self, tag: list[AbstractTag] | AbstractTag, /) -> "Page":
         """
         Adds tag(s) to this page, which is often only a head and a body.
+
         :param tag: The tag(s) to add.
         :return: This instance for chaining operations.
         """
@@ -51,6 +54,14 @@ class Page(AbstractBase):
         return self
 
     def build(self, **build_kwargs: Any) -> str:
+        """
+        Builds this HTML page.
+
+        :param build_kwargs: The kwargs to pass down the tree(these might be changed during the build,
+        mostly by the child tag).
+        :return: A string representing the HTML page.
+        """
+
         dynamic = any(tag.dynamic for tag in self._tags)
 
         if not dynamic and self._cache:
@@ -75,10 +86,27 @@ class Page(AbstractBase):
 
     @property
     def dynamic(self) -> bool:
+        """
+        Returns whether this page is dynamic or not(checked via children's dynamic).
+
+        :return: True if dynamic, False otherwise.
+        """
+
         return any(tag.dynamic for tag in self._tags)
     @property
     def tags(self) -> list[AbstractTag]:
+        """
+        Returns a copy of the owning tags.
+
+        :return: The copy.
+        """
         return self._tags.copy()
     @property
     def requirements(self) -> list[Cdn]:
+        """
+        Returns a copy of the owning tags.
+
+        :return: The copy.
+        """
+
         return self._requirements.copy()
