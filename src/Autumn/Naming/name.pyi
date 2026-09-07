@@ -9,16 +9,16 @@ from Autumn.abstract_base import AbstractBase
 class Name(AbstractBase):
 
     name: str
-    identifier: Identifier
-    classes: list[Class]
+    identifier: Identifier | str
+    classes: list[Class | str]
     attrs: dict[str, str]
     _lock: threading.Lock
     _cache: list[str]
 
     def __init__(self,
                  name: str,
-                 id_: Identifier,
-                 classes: list[Class],
+                 id_: Identifier | str,
+                 classes: list[Class | str],
                  /, *,
                  attributes: dict[str, str] | None = None,
                  ) -> None: ...

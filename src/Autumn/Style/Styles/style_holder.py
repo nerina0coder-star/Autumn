@@ -46,7 +46,7 @@ class StyleHolder(AbstractBase):
                 or self.value.startswith("'") and self.value.endswith("'"):
             value = Markup(self.value[0]) + escape(self.value[1:-2]) + Markup(self.value[-1])
 
-        out = f"{self.name}: {escape(value)}{f"!important" if self.important else ""};"
+        out = f"{self.name}:{escape(value)}{f"!important" if self.important else ""};"
 
         if not self._cache and not self.dynamic:
             self._cache.append(out)

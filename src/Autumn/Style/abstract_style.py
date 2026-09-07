@@ -62,11 +62,19 @@ class AbstractStyle(AbstractBase):
         out = []
 
         if self.name:
-            out.extend([name if isinstance(name, str) else name.build(**kwargs) for name in self.name])
+            for name in self.name[0:-1]:
+                out.extend([name.build(**kwargs) if not isinstance(name, str) else name, ","])
+            out.append(self.name[-1].build(**kwargs))
         if self.classes:
-            out.extend([cls if isinstance(cls, str) else f".{str(cls)}" for cls in self.classes])
+            out.append(",")
+            for cls in self.classes[0:-1]:
+                out.extend([f".{cls}", ","])
+            out.append(f".{self.classes[-1]}")
         if self.identifier:
-            out.append(self.identifier if isinstance(self.identifier, str) else f"#{str(self.identifier)}")
+            out.append(",")
+            for identifier in self.identifier[0:-1]:
+                out.extend([f"#{str(identifier)}", ","])
+            out.append(f"#{self.identifier[-1]}")
 
         out.append("{")
 
@@ -76,6 +84,8 @@ class AbstractStyle(AbstractBase):
 
 
         out.append("}")
+
+
 
         if not self._cache and not self.dynamic and cache_if_possible:
             self._cache.append(out)

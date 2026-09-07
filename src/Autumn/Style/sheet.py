@@ -15,18 +15,17 @@ class Sheet(AbstractBase):
         self._lock = threading.Lock()
 
     def build(self, cache_if_possible: bool = True, **kwargs) -> str:
-        with self._lock:
-            static = not any(style.dynamic for style in self.styles)
+        static = not any(style.dynamic for style in self.styles)
 
-            if static and self._caches:
-                return self._caches[-1]
+        if static and self._caches:
+            return self._caches[-1]
 
-            if (result := self.before_build(**kwargs)) is not None:
-                out = result
-            else:
-                out = "".join(i.build() for i in self.styles)
+        if (result := self.before_build(**kwargs)) is not None:
+            out = result
+        else:
+            out = "".join(i.build() for i in self.styles)
 
-            if static and cache_if_possible and not self._caches:
-                self._caches.append(out)
+        if static and cache_if_possible and not self._caches:
+            self._caches.append(out)
 
-            return out
+        return out

@@ -50,12 +50,11 @@ class PageManager(AbstractBase):
         :param page: The new page to add.
         :return: The page that was added.
         """
-        with self._lock:
-            if not all(cdn in page.requirements for cdn in self._cdn):
-                page.require([cdn for cdn in self._cdn if cdn not in page.requirements])
-            if not (name := page.name) in self._pages:
-                self._pages[name] = page
-                return page
+        if not all(cdn in page.requirements for cdn in self._cdn):
+            page.require([cdn for cdn in self._cdn if cdn not in page.requirements])
+        if not (name := page.name) in self._pages:
+            self._pages[name] = page
+            return page
         raise ValueError("Page already exists.")
 
     def build(self, name: str, **build_kwargs) -> str: # type: ignore
@@ -64,16 +63,15 @@ class PageManager(AbstractBase):
         :param name: The name of the page.
         :return: The built page(HTML).
         """
-        with self._lock:
-            page = self._pages[name]
-            if page.dynamic:
-                return page.build(**build_kwargs)
+        page = self._pages[name]
+        if page.dynamic:
+            return page.build(**build_kwargs)
 
-            out = page.build(**build_kwargs)
+        out = page.build(**build_kwargs)
 
-            if name not in self._caches and not page.dynamic:
-                self._caches[name] = out
-            return out
+        if name not in self._caches and not page.dynamic:
+            self._caches[name] = out
+        return out
 
     def merge(self, other: "PageManager") -> "PageManager":
         """
@@ -82,17 +80,15 @@ class PageManager(AbstractBase):
         :return: Self.
         """
 
-        with other._lock:
-            self._cdn.extend(other._cdn)
-            self._pages.update(other._pages)
-            self._caches.update(other._caches)
+        self._cdn.extend(other._cdn)
+        self._pages.update(other._pages)
+        self._caches.update(other._caches)
 
         return self
 
     @property
     def pages(self) -> dict[str, Page]:
-        with self._lock:
-            return self._pages
+        return self._pages
 
     @pages.setter
     def pages(self, value: Any) -> None:
@@ -104,8 +100,7 @@ class PageManager(AbstractBase):
 
     @property
     def caches(self) -> dict[str, str]:
-        with self._lock:
-            return self._caches
+        return self._caches
 
     @caches.setter
     def caches(self, value: Any) -> None:

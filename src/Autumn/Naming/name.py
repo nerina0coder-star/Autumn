@@ -32,21 +32,20 @@ class Name(AbstractBase):
 
     def build(self, cache_if_possible = True, **kwargs):
 
-        with self._lock:
-            out = [self.name]
+        out = [self.name]
 
-            self.before_build(**kwargs)
+        self.before_build(**kwargs)
 
-            if self.identifier:
-                out.append(f"#{self.identifier}")
+        if self.identifier:
+            out.append(f"#{self.identifier}")
 
-            if self.classes:
-                for cls in self.classes:
-                    out.append(f".{cls}")
+        if self.classes:
+            for cls in self.classes:
+                out.append(f".{cls}")
 
-            if self.attrs:
-                for k, v in self.attrs.items():
-                    out.append(f'[{escape(k)}="{escape(v)}"]')
+        if self.attrs:
+            for k, v in self.attrs.items():
+                out.append(f'[{escape(k)}="{escape(v)}"]')
 
         return ''.join(out)
 
