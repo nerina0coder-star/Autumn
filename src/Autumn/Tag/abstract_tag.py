@@ -36,9 +36,6 @@ class AbstractTag(AbstractBase, abc.ABC):
             self.identifier = None
         if not (hasattr(self, "classes") and isinstance(self.classes, list)):
             self.classes = []
-        if not (hasattr(self, "dynamic") and isinstance(self.dynamic, bool)):
-            self.dynamic = any(  # type: ignore[annotation-unchecked]
-                tag.dynamic if isinstance(tag, AbstractTag) else False for tag in self.tags)  # type: Ignore
         if not (hasattr(self, "_cache") and isinstance(self._cache, list)):
             self._cache = []
         if not (hasattr(self, "worth") and isinstance(self.worth, (float, int))):
@@ -61,6 +58,10 @@ class AbstractTag(AbstractBase, abc.ABC):
                 return []
 
             self.preferred_parent = default
+
+        self.dynamic = getattr(self, "dynamic", False) or any(  # type: ignore[annotation-unchecked]
+            tag.dynamic if isinstance(tag, AbstractTag) else False for tag in self.tags
+        )  # type: Ignore
 
     def identifiers(self):
         """
