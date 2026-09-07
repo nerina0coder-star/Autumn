@@ -17,6 +17,17 @@ pushing it towards/below 0.5ms.
 Speed is improved even further by caching tags/styles, making the load time for a static
 HTML page identical to a simple O(1) for a simple list lookup.
 
+### Installing
+
+The project is available in PyPI as autumn-core, so installing it is as simple as a:
+```commandline
+cd /path/to/new/project
+python3 -m venv .venv
+.venv/bin/pip install autumn-core # or .venv/Scripts/pip for windows
+```
+
+Then you can start using Autumn in any way you would like.
+
 ### How?
 The process is straight.
 But there are important things to consider:
@@ -134,7 +145,7 @@ class MyStyle(Base.style.Style):
 
 #### A note on Thread safety
 Thread safety is one of the most important parts to remember,
-every public and private method is thread-safe if it inherits from AbstractBase.
+every public and private method is automatically thread-safe if it inherits from AbstractBase.
 Well, excluding __getattribute__, __setattr__, every public/private method is thread-safe,
 unless it's a protected method. We do not lock protected methods, as they are (mostly, by convenience)
 used by the public/private methods themselves.
@@ -143,5 +154,4 @@ used by the public/private methods themselves.
 Our future goals (currently) can be listed as:
 1. Out of the box experience.
 2. A stable and mature ecosystem.
-3. Complete support for HTML/CSS.
-4. Support for JavaScript, etc...
+3. Complete support for HTML/CSS, etc...
