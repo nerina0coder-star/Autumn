@@ -54,7 +54,8 @@ class AbstractBase(abc.ABC):
             setattr(cls, k, wrapped)
 
         if not "__signature__" in cls.__dict__:
-            cls.__signature__ = signature(cls.__init__)  # type: ignore[attr-defined]
+            if "__init__" in cls.__dict__:
+                cls.__signature__ = signature(cls.__init__)  # type: ignore[attr-defined]
 
         try:
             super().__init_subclass__(**kwargs)
