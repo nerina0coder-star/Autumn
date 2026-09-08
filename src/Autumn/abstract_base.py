@@ -14,7 +14,7 @@ class AbstractBase(abc.ABC):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """
         Used to auto-lock user-defined classes.
-        Every class that's not in Autumn or is inherited from outside autumn
+        Every class that's not in Autumn or is inherited from a class outside autumn
         is considered user-defined.
         """
 
@@ -63,7 +63,8 @@ class AbstractBase(abc.ABC):
     @abc.abstractmethod
     def build(self, **kwargs: Any) -> str:
         """
-        Builds the class(e.g., style, tag, etc...)
+        Builds the class(e.g., style, tag, etc...).
+
         :param kwargs: The options to use.
         :return: The build's output.
         """
@@ -71,10 +72,16 @@ class AbstractBase(abc.ABC):
     def before_build(self, **kwargs: Any) -> str | None:
         """
         The function called before the building of the tag(s).
+
         :returns: The final item OR nothing(so the normal process continues).
         """
 
     def __deepcopy__(self, memo: Any) -> Any:
+        """
+        A safe copy that recreates the lock instead of deep copying it.
+
+        :return: Deepcopy of this object.
+        """
         cls = self.__class__
         new = cls.__new__(cls)
         memo[id(self)] = new
@@ -92,7 +99,7 @@ class AbstractBase(abc.ABC):
 
     def copy(self, item: str) -> Any:
         """
-        Copies an item from this object.
+        Copies an item from this object. The item MUST have a copy attribute.
 
         :param item: The item's name.
         :return: the copy.

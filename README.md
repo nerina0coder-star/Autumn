@@ -253,6 +253,14 @@ and support for most HTML tags.
 Even then, some goals might be truly out of hand or might require extreme metaprogramming, such as
 support for JS6.
 
+### Autumn Essential Extensions
+
+Autumn has a few extensions to offer. While not many, the ones currently available are:
+- [Autumn Tag Extras](https://github.com/nerina0coder-star/AutumnTagExtras/?tab=readme-ov-file)
+
+New extensions will be added eventually, as this is not all we have to offer.
+Among the few extensions, these are the only ones public for now.
+
 ### Our future goals
 Our future goals (currently) can be listed as:
 1. Out of the box experience.
