@@ -13,6 +13,7 @@ class Cdn(AbstractTag):
                  /, *, script_type = None, **css_kwargs):
         """
         Initializes a new instance of the Cdn tag.
+
         :param cdn_type: The type of the CDN.
         :param link: The link to the CDN.
         :param script_type: Used for Script, the type of the script.

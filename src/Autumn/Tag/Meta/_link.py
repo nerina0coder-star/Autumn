@@ -15,6 +15,7 @@ class Link(AbstractTag):
                  type_ = None):
         """
         Initializes a new instance.
+
         :param link: The link (str) to the website.
         :param link_type: The type of the link.
         :param as_: Used in mapping.

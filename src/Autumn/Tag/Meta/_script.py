@@ -14,6 +14,7 @@ class Script(AbstractTag):
             /):
         """
         Initializes a new instance.
+
         :param src: The link to the source of the script.
         :param type_: The type of the script.
         """
