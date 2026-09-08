@@ -3,6 +3,7 @@ import copy
 import threading
 from collections.abc import Callable
 from functools import wraps
+from inspect import signature
 from typing import Any
 
 
@@ -18,16 +19,15 @@ class AbstractBase(abc.ABC):
         is considered user-defined.
         """
 
-        if "__no_new__" in cls.__dict__:
-            if getattr(cls, "__no_new__"):
+        if cls.__dict__.get("__no_new__", False):
 
-                def new(cls2: type, *__: Any, **___: Any) -> Any:
-                    if cls2 is cls:
-                        raise RuntimeError(f"Cannot create class {cls.__name__}, class declared "
-                                        "No New.")
-                    return super().__new__(cls2)  # type: ignore[misc]
+            def new(cls2: type, *__: Any, **___: Any) -> Any:
+                if cls2 is cls:
+                    raise RuntimeError(f"Cannot create class {cls.__name__}, class declared "
+                                    "No New.")
+                return super().__new__(cls2)  # type: ignore[misc]
 
-                cls.__new__ = new  # type: ignore[method-assign,assignment]
+            cls.__new__ = new  # type: ignore[method-assign,assignment]
 
         for k, v in cls.__dict__.items():
 
@@ -52,6 +52,9 @@ class AbstractBase(abc.ABC):
                 return _func(self, *args, **kws)
 
             setattr(cls, k, wrapped)
+
+        if not "__signature__" in cls.__dict__:
+            cls.__signature__ = signature(cls.__init__)  # type: ignore[attr-defined]
 
         try:
             super().__init_subclass__(**kwargs)
