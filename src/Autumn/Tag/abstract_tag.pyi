@@ -1,5 +1,4 @@
 import threading
-from abc import ABC
 from typing import Any
 from collections.abc import Callable
 
@@ -8,8 +7,9 @@ from Autumn.abstract_base import AbstractBase
 from Autumn.typing.types import T
 
 
-class AbstractTag(AbstractBase, ABC):
+class AbstractTag(AbstractBase):
     type _comparison = AbstractTag | int | float
+    type _add_return = AbstractTag | list[AbstractTag] | set[AbstractTag] | dict[int, AbstractTag] | tuple[AbstractTag]
     __hash__ = object.__hash__
 
     _lock: threading.RLock
@@ -43,9 +43,9 @@ class AbstractTag(AbstractBase, ABC):
 
     def __rmul__(self: T, other: int) -> T: ...
 
-    def __add__(self, other: AbstractTag | list[AbstractTag]) -> AbstractTag | list[AbstractTag] | set[AbstractTag] | dict[int, AbstractTag] | tuple[AbstractTag]: ...
+    def __add__(self, other: AbstractTag | list[AbstractTag]) -> _add_return: ...
 
-    def __radd__(self, other: AbstractTag | list[AbstractTag]) -> AbstractTag | list[AbstractTag] | set[AbstractTag] | dict[int, AbstractTag] | tuple[AbstractTag]: ...
+    def __radd__(self, other: AbstractTag | list[AbstractTag]) -> _add_return: ...
 
     def __rlshift__(self, other: AbstractTag) -> AbstractTag: ...
 
@@ -68,3 +68,5 @@ class AbstractTag(AbstractBase, ABC):
     def __contains__(self, item: AbstractTag | type[AbstractTag]) -> bool: ...
 
     def _resolve_parent(self, lst: list[AbstractTag]) -> AbstractTag | list[AbstractTag] | set[AbstractTag] | tuple[AbstractTag] | dict[int, AbstractTag]: ...
+
+    def _shared_plus(self, other: AbstractTag | list[AbstractTag]) -> _add_return: ...

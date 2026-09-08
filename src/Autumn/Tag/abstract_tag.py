@@ -1,4 +1,3 @@
-import abc
 import copy
 from inspect import isclass
 import threading
@@ -9,7 +8,7 @@ from markupsafe import escape
 from Autumn.abstract_base import AbstractBase
 
 
-class AbstractTag(AbstractBase, abc.ABC):
+class AbstractTag(AbstractBase):
     type _comparison = AbstractTag | int | float
     __hash__ = object.__hash__
 
@@ -115,7 +114,7 @@ class AbstractTag(AbstractBase, abc.ABC):
                 except RecursionError:
                     break
 
-    def build(self, cache_if_possible = True, /, **kwargs) -> str:
+    def build(self, cache_if_possible = True, /, **kwargs):
         """
         Builds the tag and all sub tags.
 
@@ -232,22 +231,13 @@ class AbstractTag(AbstractBase, abc.ABC):
         """
         return self * other
 
-    def __add__(self, other: "AbstractTag | list[AbstractTag]"):
+    def __add__(self, other):
         """
         Adds together the given tags.
         :param other: The others to join.
         :return: The self + other(prepended) in a list or the preferred parent.
         """
-        out = None
-
-        if isinstance(other, AbstractTag):
-            out = self._resolve_parent([self, other] if not self._reverse_addition else [other, self])
-        elif isinstance(other, list):
-            out = self._resolve_parent([self, *other] if not self._reverse_addition else [*other, self])
-
-        self._reverse_addition = False
-
-        return out
+        return self._shared_plus(other)
 
     def __radd__(self, other):
         """
@@ -256,7 +246,7 @@ class AbstractTag(AbstractBase, abc.ABC):
         :return: The other + self(appended) in a list or the preferred parent.
         """
         self._reverse_addition = True
-        return self + other
+        return self._shared_plus(other)
 
     def __lshift__(self, other):
         """
@@ -388,3 +378,16 @@ class AbstractTag(AbstractBase, abc.ABC):
         else:
             parent = copy.deepcopy(lst)
         return parent
+
+    def _shared_plus(self, other):
+        out = None
+
+        if isinstance(other, AbstractTag):
+            out = self._resolve_parent([self, other] if not self._reverse_addition else [other, self])
+        elif isinstance(other, list):
+            out = self._resolve_parent([self, *other] if not self._reverse_addition else [*other, self])
+
+        self._reverse_addition = False
+
+        return out
+
