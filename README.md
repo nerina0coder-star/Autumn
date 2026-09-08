@@ -248,11 +248,6 @@ and traits are one of the reasons people use Autumn instead of Jinja2 or React.
     </tbody>
 </table>
 
-Throughout the last weeks, we've made extensions to the core, such as support for varies of CSS properties,
-and support for most HTML tags.
-Even then, some goals might be truly out of hand or might require extreme metaprogramming, such as
-support for JS6.
-
 ### Autumn Essential Extensions
 
 Autumn has a few extensions to offer. While not many, the ones currently available are:
