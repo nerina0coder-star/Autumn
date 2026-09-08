@@ -34,6 +34,9 @@ class AbstractBase(abc.ABC):
             if not (callable(v) and (not k.startswith("_") or k.startswith("__"))):
                 continue
 
+            if isinstance(v, staticmethod):
+                continue
+
             if k in [
                 "__getattribute__",
                 "__setattr__",
@@ -44,14 +47,34 @@ class AbstractBase(abc.ABC):
             ]:
                 continue
 
-            @wraps(v)
-            def wrapped(self: AbstractBase, *args: Any, _func: Callable[..., Any]=v, **kws: Any) -> Any:
-                if hasattr(self, "_lock"):
-                    with self._lock:
-                        return _func(self, *args, **kws)
-                return _func(self, *args, **kws)
+            if isinstance(v, classmethod):
+                def wrapped(cls: AbstractBase, *args: Any, _func = v, **kws: Any) -> Any:  # type: ignore[no-untyped-def]
+                    if hasattr(cls, "_lock"):
+                        with cls._lock:
+                            return _func(cls, *args, **kws)
+                    return _func(cls, *args, **kws)
+            else:
+                def wrapped(self: AbstractBase, *args: Any, _func: Callable[..., Any]=v, **kws: Any) -> Any:  # type: ignore[misc]
+                    if hasattr(self, "_lock"):
+                        with self._lock:
+                            return _func(self, *args, **kws)
+                    return _func(self, *args, **kws)
 
             setattr(cls, k, wrapped)
+
+            items = [
+                "__name__",
+                "__doc__",
+                "__str__",
+                "__qualname__",
+                "__module__",
+                "__annotations__",
+                "__type_params__"
+            ]
+
+            for i in items:
+                if i in dir(v):
+                    setattr(wrapped, i, getattr(v, i))
 
         if not "__signature__" in cls.__dict__:
             if "__init__" in cls.__dict__:
