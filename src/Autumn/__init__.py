@@ -19,6 +19,7 @@ Then change the dynamic attribute/content/etc... of your tag as needed.
 
 from .base import Base, current_base
 from .abstract_base import AbstractBase
+from .decorators import Decorators
 
 def new() -> Base:
     """
@@ -27,4 +28,4 @@ def new() -> Base:
     """
     return Base()
 
-__all__ = ["new", "Base", "current_base", "AbstractBase"]
+__all__ = ["new", "Base", "current_base", "AbstractBase", "Decorators"]

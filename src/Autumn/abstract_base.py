@@ -2,7 +2,6 @@ import abc
 import copy
 import threading
 from collections.abc import Callable
-from functools import wraps
 from inspect import signature
 from typing import Any
 
@@ -35,6 +34,9 @@ class AbstractBase(abc.ABC):
                 continue
 
             if isinstance(v, staticmethod):
+                continue
+
+            if hasattr(v, "__no_lock__") and v.__no_lock__:
                 continue
 
             if k in [
