@@ -1,4 +1,5 @@
 /build.*
+/make.*
 /test_projects
 __pycache__
 /dist
