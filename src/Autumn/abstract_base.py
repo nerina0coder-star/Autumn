@@ -101,7 +101,10 @@ class AbstractBase(abc.ABC):
             def __init_subclass__(cls2, _func=cls.__init_subclass__.__func__, **kw: Any) -> None:  # type: ignore[no-untyped-def,attr-defined]
                 if cls2.__dict__.get("__autocall_init__", True):
                     cls2.__autocall_init__ = True
-                cls2.__calling_super__ = cls
+                if hasattr(cls2, "__calling_super__") and not cls in cls2.__calling_super__:
+                    cls2.__calling_super__.append(cls)
+                else:
+                    cls2.__calling_super__ = [cls]
 
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
 
@@ -121,7 +124,12 @@ class AbstractBase(abc.ABC):
 
                 if not getattr(self.__calling_super__, "__autoinit_flag_init_called__", False) \
                     and getattr(self, "__autocall_init__", False):
-                    self.__calling_super__.__init__(self)
+                    for i in self.__calling_super__:
+                        try:
+                            i.__init__(self, *args, **kwargs)
+                        except TypeError as _:
+                            if len(signature(i.__init__).parameters) == 1:
+                                i.__init__(self)
 
             cls.__init__ = __init__  # type: ignore[method-assign]
 
