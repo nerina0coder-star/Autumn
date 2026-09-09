@@ -1,12 +1,12 @@
 from typing import ClassVar
 
-from ._cdn import Cdn as Cdn
-from ._head import Head as Head
-from ._link import Link as Link
-from ._meta import Meta as MetaTag
-from ._title import Title as Title
-from ._script import Script as Script
-from ._script_unavailable import ScriptUnavailable as ScriptUnavailable
+from .cdn import Cdn as Cdn
+from .head import Head as Head
+from .link import Link as Link
+from .meta import Meta as MetaTag
+from .title import Title as Title
+from .script import Script as Script
+from .script_unavailable import ScriptUnavailable as ScriptUnavailable
 
 class Meta:
 

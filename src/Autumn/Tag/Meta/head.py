@@ -1,5 +1,5 @@
 from Autumn.Tag.abstract_tag import AbstractTag
-from ._meta import Meta
+from .meta import Meta
 
 
 class Head(AbstractTag):

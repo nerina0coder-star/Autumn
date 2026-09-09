@@ -1,10 +1,10 @@
-from ._cdn import Cdn
-from ._link import Link
-from ._script import Script
-from ._head import Head
-from ._meta import Meta as MetaTag
-from ._title import Title
-from ._script_unavailable import ScriptUnavailable
+from .cdn import Cdn
+from .link import Link
+from .script import Script
+from .head import Head
+from .meta import Meta as MetaTag
+from .title import Title
+from .script_unavailable import ScriptUnavailable
 
 class Meta:
     """

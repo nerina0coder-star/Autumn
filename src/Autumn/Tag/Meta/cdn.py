@@ -1,7 +1,7 @@
 from Autumn.Tag.Enums.Meta import LinkType
 from Autumn.Tag.abstract_tag import AbstractTag
-from ._link import Link
-from ._script import Script
+from .link import Link
+from .script import Script
 
 
 class Cdn(AbstractTag):
