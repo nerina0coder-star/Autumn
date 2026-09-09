@@ -2,6 +2,7 @@ import abc
 import copy
 import threading
 from collections.abc import Callable
+from functools import wraps
 from inspect import signature, isroutine
 from typing import Any
 
@@ -54,19 +55,6 @@ class AbstractBase(abc.ABC):
             ]:
                 continue
 
-            if isinstance(v, classmethod):
-                def wrapped(cls: AbstractBase, *args: Any, _func = v.__func__, **kws: Any) -> Any:
-                    if hasattr(cls, "_lock"):
-                        with cls._lock:
-                            return _func(cls, *args, **kws)
-                    return _func(cls, *args, **kws)
-            else:
-                def wrapped(self: AbstractBase, *args: Any, _func: Callable[..., Any]=v, **kws: Any) -> Any:  # type: ignore[misc]
-                    if hasattr(self, "_lock"):
-                        with self._lock:
-                            return _func(self, *args, **kws)
-                    return _func(self, *args, **kws)
-
             items = [
                 "__name__",
                 "__doc__",
@@ -77,20 +65,31 @@ class AbstractBase(abc.ABC):
                 "__type_params__"
             ]
 
-            for i in items:
-                if i in dir(v):
-                    setattr(wrapped, i, getattr(v, i))
+            if isinstance(v, classmethod):
+                @wraps(v, assigned=items)
+                def wrapped(cls: AbstractBase, *args: Any, _func = v.__func__, **kws: Any) -> Any:
+                    if hasattr(cls, "_lock"):
+                        with cls._lock:
+                            return _func(cls, *args, **kws)
+                    return _func(cls, *args, **kws)
+            else:
+                @wraps(v, assigned=items)
+                def wrapped(self: AbstractBase, *args: Any, _func: Callable[..., Any]=v, **kws: Any) -> Any:
+                    if hasattr(self, "_lock"):
+                        with self._lock:
+                            return _func(self, *args, **kws)
+                    return _func(self, *args, **kws)
 
             if isinstance(v, classmethod):
                 wrapped.__signature__ = signature(v.__func__)
             else:
-                wrapped.__signature__ = signature(v)  # type: ignore[attr-defined]
+                wrapped.__signature__ = signature(v)  # type: ignore[has-type]
 
             if isinstance(v, classmethod):
                 # noinspection PyTypeChecker
                 setattr(cls, k, classmethod(wrapped))
             else:
-                setattr(cls, k, wrapped)
+                setattr(cls, k, wrapped)  # type: ignore[has-type]
 
         if not "__signature__" in cls.__dict__:
             if "__init__" in cls.__dict__:
@@ -105,6 +104,8 @@ class AbstractBase(abc.ABC):
                 cls2.__calling_super__ = cls
 
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
+
+                super().__init_subclass__(**kwargs)
 
             def __init__(self, *args, _func=cls.__init__, **kws):  # type: ignore[no-untyped-def]
                 self.__autoinit_flag_init_called__ = True
@@ -124,13 +125,7 @@ class AbstractBase(abc.ABC):
 
             cls.__init__ = __init__  # type: ignore[method-assign]
 
-
-        try:
-            super().__init_subclass__(**kwargs)
-        except TypeError as e:
-            if "takes 0 positional argument but" in str(e):
-                super().__init_subclass__()
-            raise
+        super().__init_subclass__(**kwargs)
 
     @abc.abstractmethod
     def build(self, **kwargs: Any) -> str:
