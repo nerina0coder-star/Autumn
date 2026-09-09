@@ -17,6 +17,10 @@ pushing it towards/below 0.5ms.
 Speed is improved even further by caching tags/styles, making the load time for a static
 HTML page identical to a simple O(1) for a simple list lookup.
 
+Autumn has been adding new features and fixes/docs daily, making sure that all problems are
+solved for you. Using metaprogramming, we've added tens of features to improve your experience, such
+as init autocall, decorators to disable/enable features, thread safety and error handling.
+
 ### Installing
 
 The project is available in PyPI as autumn-core, so installing it is as simple as a:

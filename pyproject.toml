@@ -18,7 +18,7 @@ include = [
 [project]
 
 name = "autumn-core"
-version = "1.1.2"
+version = "1.2.0"
 description = "Autumn - Build CSS and HTML right in your backend"
 requires-python = "~=3.12"
 license = "MIT"
@@ -28,7 +28,6 @@ authors = [
 ]
 dependencies = [
     "markupsafe ~= 3.0.3",
-    "coloraide ~= 8.12.1",
     "werkzeug ~= 3.1.8"
 ]
 classifiers = [
