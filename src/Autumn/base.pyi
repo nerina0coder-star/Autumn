@@ -2,6 +2,7 @@ import threading
 from types import TracebackType
 from typing import Any, Literal
 
+from Autumn import Decorators
 from Autumn.Naming import Naming
 from Autumn.Page import PageManager
 from Autumn.Style import StyleManager
@@ -19,6 +20,8 @@ class Base:
     tag: TagManager
     style: StyleManager
     name: type[Naming]
+
+    decorators: type[Decorators]
 
     _wrapped: list[Any]
 

@@ -197,7 +197,13 @@ class Base:
                      "__weakref__"]:
                 continue
 
+            if hasattr(j, "__allow_unsafe__") and j.__allow_unsafe__:
+                continue
+
             if not isroutine(j):
+                continue
+
+            if isinstance(j, staticmethod):
                 continue
 
             def out(self_, *args, _autumn_func=j, **kwargs):
@@ -211,7 +217,10 @@ class Base:
                     base._notify_extensions_of_exception(instance=self_, exception=e, args=args, kwargs=kwargs)
                     raise
 
-            setattr(cls, i, out)
+            if isinstance(j, classmethod):
+                setattr(cls, i, classmethod(out))
+            else:
+                setattr(cls, i, out)
 
         cls.__init__ = init
 

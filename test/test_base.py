@@ -180,3 +180,31 @@ class Test(unittest.TestCase):
         self.assertIsNot(one, two)
         self.assertEqual(len(self.base.wrapped), 1)
         self.assertEqual(len(base2.wrapped), 1)
+
+    def test_doesnt_wrap_when_decorated_with_allow_unsafe(self):
+        base = self.base
+
+        flags = {
+            "wrapped": False,
+        }
+
+        @base.ctrl()
+        class Wrapped:
+            @base.decorators.Safety.safe(False)
+            def smt(self):
+                raise RuntimeError("smt smt")
+
+        class Extension:
+            def __init__(self):
+                base.extensions = self
+
+            def _at_exception(self, **kwargs):
+                flags["wrapped"] = True
+
+        Extension()
+
+        with self.assertRaises(RuntimeError, msg="smt smt"):
+            Wrapped().smt()
+
+
+        self.assertFalse(flags["wrapped"])
