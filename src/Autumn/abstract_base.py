@@ -12,18 +12,11 @@ class AbstractBase(abc.ABC):
     The base of most, if not all, of classes in Autumn.
     """
 
-    def __init_subclass__(cls, **kwargs: Any) -> None:
+    @classmethod
+    def __handle_no_new__(cls) -> None:
         """
-        Used to auto-lock user-defined classes.
-        Every class that's not in Autumn or is inherited from a class outside autumn
-        is considered user-defined.
-
-        Flags:
-            __no_new__: Cannot call the __new__ of this class.
-            __children_autoinit__: Automatically calls the init of all children.
-            __autocall_init__: Removes the effect of parent __children_autoinit__
+        (Internal handler) Injects no new.
         """
-
         if cls.__dict__.get("__no_new__", False):
 
             def new(cls2: type, *__: Any, **___: Any) -> Any:
@@ -34,6 +27,11 @@ class AbstractBase(abc.ABC):
 
             cls.__new__ = new  # type: ignore[method-assign,assignment]
 
+    @classmethod
+    def __handle_locking__(cls) -> None:
+        """
+        (Internal handler) Injects auto-locking.
+        """
         for k, v in cls.__dict__.items():
 
             if not (isroutine(v) and (not k.startswith("_") or k.startswith("__"))):
@@ -91,26 +89,29 @@ class AbstractBase(abc.ABC):
             else:
                 setattr(cls, k, wrapped)  # type: ignore[has-type]
 
-        if not "__signature__" in cls.__dict__:
-            if "__init__" in cls.__dict__:
-                cls.__signature__ = signature(cls.__init__)  # type: ignore[attr-defined]
+    @classmethod
+    def __handle_autoinit__(cls, **kwargs) -> None:
+        """
+        (Internal method) Injects auto-initing.
+        """
 
-        # Custom Init
+        # TODO: create dictionary-based mapping for different classes based on their __qualname__
+        # TODO: for allowing multiple inheritance. Do not use __name__ since it can differ based on
+        # TODO: the scope.
 
         if cls.__dict__.get("__children_autoinit__", False):
             def __init_subclass__(cls2, _func=cls.__init_subclass__.__func__, **kw: Any) -> None:  # type: ignore[no-untyped-def,attr-defined]
                 if cls2.__dict__.get("__autocall_init__", True):
                     cls2.__autocall_init__ = True
-                if hasattr(cls2, "__calling_super__") and not cls in cls2.__calling_super__:
-                    cls2.__calling_super__.append(cls)
-                else:
-                    cls2.__calling_super__ = [cls]
+
+                cls2.__calling_super__ = cls
 
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
 
                 super().__init_subclass__(**kwargs)
 
             def __init__(self, *args, _func=cls.__init__, **kws):  # type: ignore[no-untyped-def]
+                #if self.__class__.__name__ in "ABCDE": print(self)
                 self.__autoinit_flag_init_called__ = True
                 _func(self, *args, **kws) # type: ignore[unused-ignore]
 
@@ -119,19 +120,46 @@ class AbstractBase(abc.ABC):
 
         if cls.__dict__.get("__autocall_init__", False):
 
-            def __init__(self, *args, _func=cls.__init__, **kws):  # type: ignore[no-untyped-def]
+            def __init__(self, *args, _func = cls.__dict__.get("__init__", lambda *args, **kws: ...), **kws):  # type: ignore[no-untyped-def]
+
                 _func(self, *args, **kws)  # type: ignore[unused-ignore]
 
-                if not getattr(self.__calling_super__, "__autoinit_flag_init_called__", False) \
-                    and getattr(self, "__autocall_init__", False):
-                    for i in self.__calling_super__:
+                if getattr(self, "__autocall_init__", False):
+
+                    i = self.__calling_super__
+                    if not getattr(i, "__autoinit_flag_init_called__", False):
+
                         try:
                             i.__init__(self, *args, **kwargs)
                         except TypeError as _:
                             if len(signature(i.__init__).parameters) == 1:
                                 i.__init__(self)
 
+            __init__._wrapped_ = cls.__init__
+
             cls.__init__ = __init__  # type: ignore[method-assign]
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """
+        Used to auto-lock user-defined classes.
+        Every class that's not in Autumn or is inherited from a class outside autumn
+        is considered user-defined.
+
+        Flags:
+            __no_new__: Cannot call the __new__ of this class.
+            __children_autoinit__: Automatically calls the init of all children.
+            __autocall_init__: Removes the effect of parent __children_autoinit__
+        """
+
+        cls.__handle_no_new__()
+
+        cls.__handle_autoinit__(**kwargs)
+
+        if not "__signature__" in cls.__dict__:
+            if "__init__" in cls.__dict__:
+                cls.__signature__ = signature(cls.__init__)  # type: ignore[attr-defined]
+
+        cls.__handle_locking__()
 
         super().__init_subclass__(**kwargs)
 
