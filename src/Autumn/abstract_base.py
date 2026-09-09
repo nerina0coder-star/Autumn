@@ -16,6 +16,11 @@ class AbstractBase(abc.ABC):
         Used to auto-lock user-defined classes.
         Every class that's not in Autumn or is inherited from a class outside autumn
         is considered user-defined.
+
+        Flags:
+            __no_new__: Cannot call the __new__ of this class.
+            __children_autoinit__: Automatically calls the init of all children.
+            __autocall_init__: Removes the effect of parent __children_autoinit__
         """
 
         if cls.__dict__.get("__no_new__", False):
@@ -77,6 +82,11 @@ class AbstractBase(abc.ABC):
                     setattr(wrapped, i, getattr(v, i))
 
             if isinstance(v, classmethod):
+                wrapped.__signature__ = signature(v.__func__)
+            else:
+                wrapped.__signature__ = signature(v)  # type: ignore[attr-defined]
+
+            if isinstance(v, classmethod):
                 # noinspection PyTypeChecker
                 setattr(cls, k, classmethod(wrapped))
             else:
@@ -85,6 +95,35 @@ class AbstractBase(abc.ABC):
         if not "__signature__" in cls.__dict__:
             if "__init__" in cls.__dict__:
                 cls.__signature__ = signature(cls.__init__)  # type: ignore[attr-defined]
+
+        # Custom Init
+
+        if cls.__dict__.get("__children_autoinit__", False):
+            def __init_subclass__(cls2, _func=cls.__init_subclass__.__func__, **kw: Any) -> None:  # type: ignore[no-untyped-def,attr-defined]
+                if cls2.__dict__.get("__autocall_init__", True):
+                    cls2.__autocall_init__ = True
+                cls2.__calling_super__ = cls
+
+                _func(cls2, **kw)  # type: ignore[unused-ignore]
+
+            def __init__(self, *args, _func=cls.__init__, **kws):  # type: ignore[no-untyped-def]
+                self.__autoinit_flag_init_called__ = True
+                _func(self, *args, **kws) # type: ignore[unused-ignore]
+
+            cls.__init_subclass__ = classmethod(__init_subclass__)  # type: ignore[assignment,arg-type]
+            cls.__init__ = __init__  # type: ignore[method-assign]
+
+        if cls.__dict__.get("__autocall_init__", False):
+
+            def __init__(self, *args, _func=cls.__init__, **kws):  # type: ignore[no-untyped-def]
+                _func(self, *args, **kws)  # type: ignore[unused-ignore]
+
+                if not getattr(self.__calling_super__, "__autoinit_flag_init_called__", False) \
+                    and getattr(self, "__autocall_init__", False):
+                    self.__calling_super__.__init__(self)
+
+            cls.__init__ = __init__  # type: ignore[method-assign]
+
 
         try:
             super().__init_subclass__(**kwargs)

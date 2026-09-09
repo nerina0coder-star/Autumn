@@ -18,6 +18,7 @@ class AbstractStyle(AbstractBase):
     """
 
     __no_new__ = True
+    __children_autoinit__ = True
 
     def __init__(self):
 

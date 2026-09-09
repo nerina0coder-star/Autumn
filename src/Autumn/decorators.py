@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from inspect import isroutine
+from inspect import isroutine, isclass
 
 from Autumn.typing.types import T
 
@@ -70,6 +70,23 @@ def make_safe(meth: T | None = None) -> T:
     meth.__allow_unsafe__ = False  # type: ignore[union-attr]
     return meth
 
+
+def disable_autoinit(cls: T | None = None) -> T:
+    """
+    Nullifies the effect of parent's __children_autoinit__.
+
+    :param meth: The method to decorate.
+    :return: The decorated method.
+    """
+    if cls is None:
+        return disable_autoinit   # type: ignore[return-value]
+    if not isclass(cls):
+        raise ValueError(f"Expected to modify a method, given {cls}.")
+
+    cls.__autocall_init__ = False  # type: ignore[attr-defined]
+    return cls
+
+
 def lock(boolean: bool) -> Callable[[T | None], T]:
     """
     A shorthand. It true, it will allow locking, if false, it won't be locked.
@@ -103,12 +120,18 @@ class Decorators:
     Contains the decorators used in Autumn.
     """
 
+    # noinspection PyTypeHints
     class Locking:
         no_lock: Callable[[T | None], T] = no_lock
         allow_lock: Callable[[T | None], T] = allow_lock
         lock: Callable[[bool], Callable[[T | None], T]] = lock
 
+    # noinspection PyTypeHints
     class Safety:
         allow_unsafe: Callable[[T | None], T] = allow_unsafe
         make_safe: Callable[[T | None], T] = make_safe
         safe: Callable[[bool], Callable[[T | None], T]] = safe
+
+    # noinspection PyTypeHints
+    class Functionality:
+        disable_autoinit: Callable[[T | None], T] = disable_autoinit

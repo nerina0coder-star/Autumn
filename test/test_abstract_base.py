@@ -3,7 +3,7 @@ import unittest
 from typing import Any
 
 from Autumn import AbstractBase
-from Autumn.decorators import no_lock, allow_lock
+from Autumn.decorators import no_lock, allow_lock, disable_autoinit
 
 
 class Test(unittest.TestCase):
@@ -85,3 +85,66 @@ class Test(unittest.TestCase):
         cls.meth()
 
         self.assertTrue(locked[0])
+
+    def test_base_autoinits_children_when_class_has_children_autoinit(self):
+
+        flags = {
+            "base_called": [],
+            "called_child": [],
+            "called_grandchildren": []
+        }
+
+        class A(AbstractBase):
+            __children_autoinit__ = True
+
+            def build(self, **kwargs: Any) -> str:
+                return ""
+
+            def __init__(self) -> None:
+                flags["base_called"].append(True)
+
+        class B(A):
+
+            def __init__(self) -> None:
+                flags["called_child"].append(True)
+
+        class C(B):
+
+            def __init__(self) -> None:
+                flags["called_grandchildren"].append(True)
+
+        B()
+        C()
+        C()
+
+        self.assertEqual(flags["base_called"], [True, True, True])
+        self.assertEqual(flags["called_child"], [True])
+        self.assertEqual(flags["called_grandchildren"], [True, True])
+
+    def test_base_autoinit_ignores_class_when_has_autocall_init(self):
+
+        flags = {
+            "A-Called": False,
+            "B-Called": False
+        }
+
+        class A(AbstractBase):
+
+            __children_autoinit__ = True
+
+            def __init__(self):
+                flags["A-Called"] = True
+
+            def build(self, **kwargs: Any) -> str:
+                return ""
+
+        @disable_autoinit
+        class B(A):
+
+            def __init__(self):
+                flags["B-Called"] = True
+
+        B()
+
+        self.assertFalse(flags["A-Called"])
+        self.assertTrue(flags["B-Called"])

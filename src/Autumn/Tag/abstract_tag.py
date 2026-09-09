@@ -13,6 +13,7 @@ class AbstractTag(AbstractBase):
     __hash__ = object.__hash__
 
     __no_new__ = True
+    __children_autoinit__ = True
 
     def __init__(self):
         """
@@ -20,6 +21,7 @@ class AbstractTag(AbstractBase):
         Be aware that dynamic is based on children's status.
         If none of the children are dynamic, it defaults to False.
         """
+
         self._lock = threading.RLock()
 
         # Please note that this is because user's code is unpredictable, therefore using RLock's flexibility
