@@ -2,7 +2,7 @@ import abc
 import copy
 import threading
 from collections.abc import Callable
-from inspect import signature
+from inspect import signature, isroutine
 from typing import Any
 
 
@@ -30,7 +30,7 @@ class AbstractBase(abc.ABC):
 
         for k, v in cls.__dict__.items():
 
-            if not (callable(v) and (not k.startswith("_") or k.startswith("__"))):
+            if not (isroutine(v) and (not k.startswith("_") or k.startswith("__"))):
                 continue
 
             if isinstance(v, staticmethod):
@@ -50,7 +50,7 @@ class AbstractBase(abc.ABC):
                 continue
 
             if isinstance(v, classmethod):
-                def wrapped(cls: AbstractBase, *args: Any, _func = v, **kws: Any) -> Any:  # type: ignore[no-untyped-def]
+                def wrapped(cls: AbstractBase, *args: Any, _func = v.__func__, **kws: Any) -> Any:
                     if hasattr(cls, "_lock"):
                         with cls._lock:
                             return _func(cls, *args, **kws)
@@ -61,8 +61,6 @@ class AbstractBase(abc.ABC):
                         with self._lock:
                             return _func(self, *args, **kws)
                     return _func(self, *args, **kws)
-
-            setattr(cls, k, wrapped)
 
             items = [
                 "__name__",
@@ -77,6 +75,12 @@ class AbstractBase(abc.ABC):
             for i in items:
                 if i in dir(v):
                     setattr(wrapped, i, getattr(v, i))
+
+            if isinstance(v, classmethod):
+                # noinspection PyTypeChecker
+                setattr(cls, k, classmethod(wrapped))
+            else:
+                setattr(cls, k, wrapped)
 
         if not "__signature__" in cls.__dict__:
             if "__init__" in cls.__dict__:
