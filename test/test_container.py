@@ -1,11 +1,11 @@
 import unittest
 
-from Autumn import new
+from Autumn import new # type: ignore[import-not-found]
 
 
 class Test(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         base = new()
 
         self.page = base.page
@@ -13,7 +13,7 @@ class Test(unittest.TestCase):
         self.tag = base.tag
         self.name = base.name
 
-    def test_page(self):
+    def test_page(self) -> None:
         page = (self.page.require(self.tag.meta.Cdn("style", "https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/js/bootstrap.min.js"))
                 .new("my-page"))
 
@@ -29,7 +29,7 @@ class Test(unittest.TestCase):
                                   '</head>'
                                   '</html>')
 
-        class CustomPage(self.page.Page):
+        class CustomPage(self.page.Page):  # type: ignore[misc,name-defined]
             ...
 
         self.page.register(CustomPage("page"))
@@ -40,12 +40,12 @@ class Test(unittest.TestCase):
         self.assertMultiLineEqual(page.build(),
                                   self.page.build("my-page"))
 
-    def test_sheet(self):
+    def test_sheet(self) -> None:
 
         self2 = self
 
-        class Style(self.style.Style):
-            def __init__(self):
+        class Style(self.style.Style):  # type: ignore[misc,name-defined]
+            def __init__(self) -> None:
                 self.styles = ["margin: 1px;", "padding: 1px;"]
                 self.name = ["div", self2.name.Name("smt", "identifier", ["any"])]
                 self.classes = ["margin-and-padding", self2.name.Class("cls")]

@@ -1,13 +1,14 @@
 import unittest
 
-from Autumn import new, Base
-from Autumn import current_base
+from typing import Any
+
+from Autumn import new, Base, current_base  # type: ignore[import-not-found]
 
 class Test(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.base = new()
 
-    def test_wrapping(self):
+    def test_wrapping(self) -> None:
         @self.base.ctrl
         class A:
             ...
@@ -27,7 +28,7 @@ class Test(unittest.TestCase):
 
         self.assertEqual(len(self.base.wrapped), 0)
 
-    def test_merging(self):
+    def test_merging(self) -> None:
         other = new()
 
         @self.base.ctrl
@@ -58,29 +59,29 @@ class Test(unittest.TestCase):
         for i in new_base._wrapped:
             self.assertIs(i.__autumn_base__, new_base)
 
-    def test_extension_registers(self):
+    def test_extension_registers(self) -> None:
 
         self_ = self
 
         class Extension:
 
-            def __init__(self):
+            def __init__(self) -> None:
                 self_.base.extensions = self
 
         Extension()
 
         self.assertEqual(len(self.base.extensions), 1)
 
-    def test_extension_exception_hook_with_context(self):
+    def test_extension_exception_hook_with_context(self) -> None:
 
         called = []
 
         self_ = self
         class Extension:
-            def __init__(self):
+            def __init__(self) -> None:
                 self_.base.extensions = self
 
-            def _at_exception(self, **kwargs):
+            def _at_exception(self, **kwargs: Any) -> None:
                 called.append("any")
 
                 self_.assertIsNone(kwargs.get("instance"))
@@ -98,11 +99,11 @@ class Test(unittest.TestCase):
         self.assertRaises(RuntimeError, test)
         self.assertTrue(called)
 
-    def test_extension_wrapped(self):
+    def test_extension_wrapped(self) -> None:
 
         self_ = self
         class Extension:
-            def __init__(self):
+            def __init__(self) -> None:
                 self_.base.extensions = self
 
         for i in range(10):
@@ -110,20 +111,20 @@ class Test(unittest.TestCase):
             self.assertEqual(len(self.base.extensions), i + 1)
             self.assertEqual(len(self.base.wrapped), i + 1)
 
-    def test_extension_exception_hook_with_wrapped(self):
+    def test_extension_exception_hook_with_wrapped(self) -> None:
 
         called_hook = []
-        called_init = []
-        called_something = []
+        called_init: list[str] = []
+        called_something: list[str] = []
 
         @self.base.ctrl()
         class Wrapped:
-            def __init__(self):
+            def __init__(self) -> None:
                 if not called_init:
                     called_init.append("smt")
                     raise Exception("smt")
 
-            def something(self):
+            def something(self) -> None:
                 if not called_something:
                     called_something.append("smt")
                     raise Exception("smt")
@@ -131,10 +132,10 @@ class Test(unittest.TestCase):
         self2 = self
 
         class Ext:
-            def __init__(self):
+            def __init__(self) -> None:
                 self2.base.extensions = self
 
-            def _at_exception(self, **kwargs):
+            def _at_exception(self, **kwargs: Any) -> None:
                 self2.assertIsNotNone(kwargs.get("instance"))
                 self2.assertIsNotNone(kwargs.get("kwargs"))
                 self2.assertIsNotNone(kwargs.get("args"))
@@ -157,14 +158,14 @@ class Test(unittest.TestCase):
 
         Wrapped().something()
 
-    def test_ownership(self):
+    def test_ownership(self) -> None:
 
         base2 = new()
 
         self_ = self
         class Extension:
 
-            def __init__(self):
+            def __init__(self) -> None:
                 self_.base.extensions = self
 
         ext = Extension()
@@ -181,7 +182,7 @@ class Test(unittest.TestCase):
         self.assertEqual(len(self.base.wrapped), 1)
         self.assertEqual(len(base2.wrapped), 1)
 
-    def test_doesnt_wrap_when_decorated_with_allow_unsafe(self):
+    def test_doesnt_wrap_when_decorated_with_allow_unsafe(self) -> None:
         base = self.base
 
         flags = {
@@ -191,11 +192,11 @@ class Test(unittest.TestCase):
         @base.ctrl()
         class Wrapped:
             @base.decorators.Safety.safe(False)
-            def smt(self):
+            def smt(self) -> None:
                 raise RuntimeError("smt smt")
 
         class Extension:
-            def __init__(self):
+            def __init__(self) -> None:
                 base.extensions = self
 
             def _at_exception(self, **kwargs):

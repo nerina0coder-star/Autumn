@@ -2,8 +2,8 @@ import threading
 import unittest
 from typing import Any
 
-from Autumn import AbstractBase
-from Autumn.decorators import no_lock, allow_lock, disable_autoinit
+from Autumn import AbstractBase  # type: ignore[import-not-found]
+from Autumn.decorators import no_lock, allow_lock, disable_autoinit, only_self  # type: ignore[import-not-found]
 
 
 class Test(unittest.TestCase):
@@ -293,3 +293,20 @@ class Test(unittest.TestCase):
         C()
 
         self.assertEqual(order, [B, A])
+
+    def test_only_self_works(self):
+
+        class A(AbstractBase):  # type: ignore[misc]
+
+            def build(self, **kwargs: Any) -> str: return ""
+
+            def __init__(self) -> None:
+                assert self.b == "test"
+
+        @only_self
+        class B(A):
+
+            def __init__(self, b):
+                self.b = b
+
+        B("test")

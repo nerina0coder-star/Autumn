@@ -1,7 +1,9 @@
 from collections.abc import Callable
-from inspect import isroutine
+from functools import wraps
+from inspect import isroutine, isclass
+from typing import Any, TypeVar
 
-from Autumn.typing.types import T
+T = TypeVar('T')
 
 
 def no_lock(meth: T | None = None) -> T:
@@ -83,9 +85,47 @@ def disable_autoinit(meth: T | None = None) -> T:
     if not isroutine(meth):
         raise ValueError(f"Expected to modify __init__, given {meth}.")
 
-    meth.__no_auto__ = True  # type: ignore[union-attr]
+    meth.__no_autoinit__ = True  # type: ignore[union-attr]
     return meth
 
+def enable_autoinit(meth: T | None = None) -> T:
+    """
+    Nullifies the effect of disable_amro.
+
+    :param meth: The method that was decorated with disable_autoinit.
+    :return: The changed method.
+    """
+
+    if meth is None:
+        return enable_autoinit  # type: ignore[return-value]
+    if not isroutine(meth):
+        raise ValueError(f"Expected to modify __init__, given {meth}.")
+
+    meth.__no_autoinit__ = False  # type: ignore[union-attr]
+    return meth
+
+def only_self(cls: T | None = None) -> T:
+    """
+    Used for auto init. Changes the default argument of children to "self".
+
+    :param cls: The class to decorate.
+    :return: The decorated class.
+    """
+
+    if cls is None:
+        return only_self  # type: ignore[return-value]
+    if not isclass(cls):
+        raise ValueError(f"expected to modify a class, given {cls}")
+
+    before = cls.__init_subclass__
+
+    @wraps(before)
+    def init_subclass(cls2: Any, **kwargs: Any) -> None:
+        before(**kwargs)  # type: ignore[unused-ignore]
+        setattr(cls2, "__params_to_parent__", lambda: tuple([tuple(), dict()]))
+    setattr(cls, "__init_subclass__", classmethod(init_subclass))  # type: ignore[arg-type]
+
+    return cls
 
 def lock(boolean: bool) -> Callable[[T | None], T]:
     """
@@ -115,6 +155,20 @@ def safe(boolean: bool) -> Callable[[T | None], T]:
     else:
         return allow_unsafe
 
+def autoinit(boolean: bool) -> Callable[[T | None], T]:
+    """
+    A shorthand. If true, this __init__ will sign the class as `auto init`-following(parent's influence counts).
+    If false, this will sign the class as `auto init`-ignoring.
+
+    :param boolean: Whether this method should remain `auto init` following or not.
+    :return: The method to wrap this __init__.
+    """
+
+    if boolean:
+        return enable_autoinit
+    else:
+        return disable_autoinit
+
 class Decorators:
     """
     Contains the decorators used in Autumn.
@@ -133,5 +187,8 @@ class Decorators:
         safe: Callable[[bool], Callable[[T | None], T]] = safe
 
     # noinspection PyTypeHints
-    class Functionality:
+    class AutoInit:
         disable_autoinit: Callable[[T | None], T] = disable_autoinit
+        enable_autoinit: Callable[[T | None], T] = enable_autoinit
+        only_self: Callable[[T | None], T] = only_self
+        autoinit: Callable[[bool], Callable[[T | None], T]] = autoinit
