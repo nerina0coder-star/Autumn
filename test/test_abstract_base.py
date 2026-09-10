@@ -186,7 +186,7 @@ class Test(unittest.TestCase):
 
         class D(C):
 
-            def __init__(self) -> None:\
+            def __init__(self) -> None:
                 flags["D-Called"].append(True)
 
         def clear() -> None:
@@ -241,23 +241,26 @@ class Test(unittest.TestCase):
             def build(self, **kwargs: Any) -> str:
                 return ""
 
-            def __init_hook__(self, a):
+            def __init_hook__(self, *, a):
                 assert a == "test"
 
         self2 = self
+        called = []
 
         class B(A):
             def __init__(self, b):
                 self.b = b
 
             def __params_to_parent__(self, parent, *args, **kwargs):
-
+                called.append(True)
                 self2.assertIs(parent, A)
-                self2.assertEqual(kwargs, {"b": self.b})
+                self2.assertEqual(kwargs, {})
+                self2.assertEqual(args, (self.b,))
 
                 return tuple(), {"a": self.b}
 
         B("test")
+        self.assertEqual(called, [True])
 
     def test_calling_super_replacement_changes_the_init_order(self):
 

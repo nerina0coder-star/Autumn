@@ -159,7 +159,7 @@ class AbstractBase(abc.ABC):
 
             params = lambda *a, **kw: (args, kws)
 
-            if "__params_to_parent__" in self.__dict__:
+            if "__params_to_parent__" in self.__dict__ or "__params_to_parent__" in type(self).__dict__:
                 params = getattr(self, "__params_to_parent__")
 
             calling_super = getattr(self, "__calling_super__").copy()
