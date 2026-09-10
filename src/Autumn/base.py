@@ -10,6 +10,7 @@ from Autumn.Page.page_manager import PageManager
 from Autumn.Style import StyleManager
 from Autumn.Tag import TagManager
 from Autumn.exceptions import ContextError
+from .abstract_base import AbstractBase
 from .decorators import Decorators
 from .Naming import Naming
 
@@ -57,6 +58,10 @@ class Base:
         self.tag = TagManager()
         self.style = StyleManager()
         self.name = Naming
+        self.any = AbstractBase
+        """
+        any - the base class for all/most autumn classes.
+        """
 
         self.decorators = Decorators
 
