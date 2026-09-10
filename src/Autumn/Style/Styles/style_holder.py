@@ -12,7 +12,6 @@ class StyleHolder(AbstractBase):
     """
 
     __no_new__ = True
-    __children_autoinit__ = True
 
     def __init__(self):
         self._lock = threading.RLock()

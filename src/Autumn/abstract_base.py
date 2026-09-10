@@ -17,14 +17,15 @@ class AbstractBase(abc.ABC):
         """
         (Internal handler) Injects no new.
         """
-        if cls.__dict__.get("__no_new__", False):
+        if cls.__dict__.get("__no_new__", False) and not getattr(cls.__new__, "__autumn_no_new_handled", False):
 
             def new(cls2: type, *__: Any, **___: Any) -> Any:
                 if cls2 is cls:
                     raise RuntimeError(f"Cannot create class {cls.__name__}, class declared "
-                                    "No New.")
-                return super().__new__(cls2)  # type: ignore[misc]
+                                       "No New.")
+                return super(cls, cls2).__new__(cls2)  # type: ignore[misc]
 
+            new.__autumn_no_new_handled = True  # type: ignore[attr-defined]
             cls.__new__ = new  # type: ignore[method-assign,assignment]
 
     @classmethod
@@ -65,14 +66,14 @@ class AbstractBase(abc.ABC):
 
             if isinstance(v, classmethod):
                 @wraps(v, assigned=items)
-                def wrapped(cls: AbstractBase, *args: Any, _func = v.__func__, **kws: Any) -> Any:
+                def wrapped(cls: AbstractBase, *args: Any, _func=v.__func__, **kws: Any) -> Any:
                     if hasattr(cls, "_lock"):
                         with cls._lock:
                             return _func(cls, *args, **kws)
                     return _func(cls, *args, **kws)
             else:
                 @wraps(v, assigned=items)
-                def wrapped(self: AbstractBase, *args: Any, _func: Callable[..., Any]=v, **kws: Any) -> Any:
+                def wrapped(self: AbstractBase, *args: Any, _func: Callable[..., Any] = v, **kws: Any) -> Any:
                     if hasattr(self, "_lock"):
                         with self._lock:
                             return _func(self, *args, **kws)
@@ -83,6 +84,8 @@ class AbstractBase(abc.ABC):
             else:
                 wrapped.__signature__ = signature(v)  # type: ignore[has-type]
 
+            wrapped.__no_lock__ = True  # type: ignore[has-type]
+
             if isinstance(v, classmethod):
                 # noinspection PyTypeChecker
                 setattr(cls, k, classmethod(wrapped))
@@ -90,7 +93,7 @@ class AbstractBase(abc.ABC):
                 setattr(cls, k, wrapped)  # type: ignore[has-type]
 
     @classmethod
-    def __handle_autoinit__(cls, **kwargs) -> None:
+    def __handle_autoinit__(cls) -> None:
         """
         (Internal method) Injects auto-initing.
         """
@@ -99,8 +102,22 @@ class AbstractBase(abc.ABC):
         # TODO: for allowing multiple inheritance. Do not use __name__ since it can differ based on
         # TODO: the scope.
 
+        def get(item: str) -> Callable[..., Any]:
+            out = cls.__dict__.get(item, lambda *x, **y: ...)
+            if out.__dict__.get("__autumn_handled_autoinit__", False):
+                return lambda *x, **y: ...
+            return out  # type: ignore[no-any-return]
+
+        def getcls(item: str) -> Callable[..., Any]:
+            out = getattr(get(item), "__func__", lambda *x, **y: ...)
+            if out.__dict__.get("__autumn_handled_autoinit__", False):
+                return lambda *x, **y: ...
+            return out
+
         if cls.__dict__.get("__children_autoinit__", False):
-            def __init_subclass__(cls2, _func=cls.__init_subclass__.__func__, **kw: Any) -> None:  # type: ignore[no-untyped-def,attr-defined]
+            def __init_subclass__(cls2,  # type: ignore[no-untyped-def]
+                                  _func=getcls("__init_subclass__"),
+                                  **kw: Any) -> None:
                 if cls2.__dict__.get("__autocall_init__", True):
                     cls2.__autocall_init__ = True
 
@@ -108,34 +125,29 @@ class AbstractBase(abc.ABC):
 
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
 
-                super().__init_subclass__(**kwargs)
+                super(cls, cls2).__init_subclass__(**kw)
 
-            def __init__(self, *args, _func=cls.__init__, **kws):  # type: ignore[no-untyped-def]
-                #if self.__class__.__name__ in "ABCDE": print(self)
-                self.__autoinit_flag_init_called__ = True
-                _func(self, *args, **kws) # type: ignore[unused-ignore]
-
+            __init_subclass__.__autumn_handled_autoinit__ = True  # type: ignore[attr-defined]
             cls.__init_subclass__ = classmethod(__init_subclass__)  # type: ignore[assignment,arg-type]
-            cls.__init__ = __init__  # type: ignore[method-assign]
 
         if cls.__dict__.get("__autocall_init__", False):
 
-            def __init__(self, *args, _func = cls.__dict__.get("__init__", lambda *args, **kws: ...), **kws):  # type: ignore[no-untyped-def]
+            def __init__(self, *args, _func=get("__init__"), **kws):  # type: ignore[no-untyped-def]
 
                 _func(self, *args, **kws)  # type: ignore[unused-ignore]
 
                 if getattr(self, "__autocall_init__", False):
 
                     i = self.__calling_super__
-                    if not getattr(i, "__autoinit_flag_init_called__", False):
 
-                        try:
-                            i.__init__(self, *args, **kwargs)
-                        except TypeError as _:
-                            if len(signature(i.__init__).parameters) == 1:
-                                i.__init__(self)
+                    try:
+                        i.__init__(self, *args, **kws)
+                    except TypeError as _:
+                        if len(signature(i.__init__).parameters) == 1:
+                            i.__init__(self)
 
-            __init__._wrapped_ = cls.__init__
+            __init__._wrapped_ = cls.__init__  # type: ignore[attr-defined]
+            __init__.__autumn_handled_autoinit__ = True  # type: ignore[attr-defined]
 
             cls.__init__ = __init__  # type: ignore[method-assign]
 
@@ -151,15 +163,20 @@ class AbstractBase(abc.ABC):
             __autocall_init__: Removes the effect of parent __children_autoinit__
         """
 
+        if cls.__dict__.get("__already_handled__", False):
+            super().__init_subclass__(**kwargs)
+
         cls.__handle_no_new__()
 
-        cls.__handle_autoinit__(**kwargs)
+        cls.__handle_autoinit__()
 
         if not "__signature__" in cls.__dict__:
             if "__init__" in cls.__dict__:
                 cls.__signature__ = signature(cls.__init__)  # type: ignore[attr-defined]
 
         cls.__handle_locking__()
+
+        cls.__already_handled__ = True  # type: ignore[attr-defined]
 
         super().__init_subclass__(**kwargs)
 
@@ -200,7 +217,7 @@ class AbstractBase(abc.ABC):
                 raise TypeError(f"Object {self.__class__.__name__}.{k} raised deepcopy error") from e
         return new
 
-    def copy(self, item: str) -> Any:
+    def copy(self, item: str) -> Any | None:
         """
         Copies an item from this object. The item MUST have a copy attribute.
 
@@ -218,16 +235,9 @@ class AbstractBase(abc.ABC):
                 if hasattr(self, "_" + item):
                     out = getattr(self, "_" + item)
 
-                    if hasattr(out, "copy"):
-                        return out.copy()
-                    else:
-                        return out
+                    return out.copy()
+
             else:
-                return getattr(self, item)
+                return getattr(self, item).copy()
 
-        out = getattr(self, item)
-
-        with lock:
-            if hasattr(out, "copy"):
-                return out.copy()
-            return out
+        return None

@@ -148,3 +148,49 @@ class Test(unittest.TestCase):
 
         self.assertFalse(flags["A-Called"])
         self.assertTrue(flags["B-Called"])
+
+"""    def test_autoinit_works_with_multiple_children_autoinit_exists(self):
+
+        flags = {
+            "A-Called": [],
+            "B-Called": [],
+            "C-Called": [],
+            "D-Called": []
+        }
+
+        class A(AbstractBase):
+            __children_autoinit__ = True
+
+            def build(self, **kwargs: Any) -> str:
+                return ""
+
+            def __init__(self) -> None:
+                flags["A-Called"].append(True)
+
+        class B(A):
+
+            def __init__(self) -> None:
+                flags["B-Called"].append(True)
+
+        class C(B):
+            __children_autoinit__ = True
+
+            def __init__(self) -> None:
+                flags["C-Called"].append(True)
+
+        class D(C):
+
+            def __init__(self) -> None:\
+                flags["D-Called"].append(True)
+
+        def clear():
+            for v in flags.values():
+                v.clear()
+
+        D()
+
+        self.assertEqual(flags["A-Called"], [True])
+        self.assertEqual(flags["B-Called"], [])
+        self.assertEqual(flags["C-Called"], [True])
+        self.assertEqual(flags["D-Called"], [True])
+        """

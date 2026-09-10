@@ -13,7 +13,6 @@ class AbstractTag(AbstractBase):
     __hash__ = object.__hash__
 
     __no_new__ = True
-    __children_autoinit__ = True
 
     def __init__(self):
         """
