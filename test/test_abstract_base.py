@@ -138,9 +138,10 @@ class Test(unittest.TestCase):
             def build(self, **kwargs: Any) -> str:
                 return ""
 
-        @disable_autoinit
+
         class B(A):
 
+            @disable_autoinit
             def __init__(self):
                 flags["B-Called"] = True
 

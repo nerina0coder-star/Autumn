@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from inspect import isroutine, isclass
+from inspect import isroutine
 
 from Autumn.typing.types import T
 
@@ -71,20 +71,20 @@ def make_safe(meth: T | None = None) -> T:
     return meth
 
 
-def disable_autoinit(cls: T | None = None) -> T:
+def disable_autoinit(meth: T | None = None) -> T:
     """
     Nullifies the effect of parent's __children_autoinit__.
 
     :param meth: The method to decorate.
     :return: The decorated method.
     """
-    if cls is None:
+    if meth is None:
         return disable_autoinit   # type: ignore[return-value]
-    if not isclass(cls):
-        raise ValueError(f"Expected to modify a method, given {cls}.")
+    if not isroutine(meth):
+        raise ValueError(f"Expected to modify __init__, given {meth}.")
 
-    cls.__autocall_init__ = False  # type: ignore[attr-defined]
-    return cls
+    meth.__no_auto__ = True  # type: ignore[attr-defined]
+    return meth
 
 
 def lock(boolean: bool) -> Callable[[T | None], T]:
