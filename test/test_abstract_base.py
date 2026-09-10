@@ -149,7 +149,7 @@ class Test(unittest.TestCase):
         self.assertFalse(flags["A-Called"])
         self.assertTrue(flags["B-Called"])
 
-"""    def test_autoinit_works_with_multiple_children_autoinit_exists(self):
+    def test_autoinit_works_with_multiple_children_autoinit_exists(self):
 
         flags = {
             "A-Called": [],
@@ -183,7 +183,7 @@ class Test(unittest.TestCase):
             def __init__(self) -> None:\
                 flags["D-Called"].append(True)
 
-        def clear():
+        def clear() -> None:
             for v in flags.values():
                 v.clear()
 
@@ -193,4 +193,36 @@ class Test(unittest.TestCase):
         self.assertEqual(flags["B-Called"], [])
         self.assertEqual(flags["C-Called"], [True])
         self.assertEqual(flags["D-Called"], [True])
-        """
+
+        clear()
+
+        D()
+        C()
+
+        self.assertEqual(flags["A-Called"], [True, True])
+        self.assertEqual(flags["B-Called"], [])
+        self.assertEqual(flags["C-Called"], [True, True])
+        self.assertEqual(flags["D-Called"], [True])
+
+        clear()
+
+        D()
+        C()
+        B()
+
+        self.assertEqual(flags["A-Called"], [True, True, True])
+        self.assertEqual(flags["B-Called"], [True])
+        self.assertEqual(flags["C-Called"], [True, True])
+        self.assertEqual(flags["D-Called"], [True])
+
+        clear()
+
+        D()
+        C()
+        B()
+        A()
+
+        self.assertEqual(flags["A-Called"], [True, True, True, True])
+        self.assertEqual(flags["B-Called"], [True])
+        self.assertEqual(flags["C-Called"], [True, True])
+        self.assertEqual(flags["D-Called"], [True])

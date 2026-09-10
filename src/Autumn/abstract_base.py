@@ -98,10 +98,6 @@ class AbstractBase(abc.ABC):
         (Internal method) Injects auto-initing.
         """
 
-        # TODO: create dictionary-based mapping for different classes based on their __qualname__
-        # TODO: for allowing multiple inheritance. Do not use __name__ since it can differ based on
-        # TODO: the scope.
-
         def get(item: str) -> Callable[..., Any]:
             out = cls.__dict__.get(item, lambda *x, **y: ...)
             if out.__dict__.get("__autumn_handled_autoinit__", False):
@@ -121,7 +117,8 @@ class AbstractBase(abc.ABC):
                 if cls2.__dict__.get("__autocall_init__", True):
                     cls2.__autocall_init__ = True
 
-                cls2.__calling_super__ = cls
+                if "__calling_super__" in cls2.__dict__: cls2.__dict__["__calling_super__"].append(cls)
+                else: cls2.__calling_super__ = [cls]
 
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
 
@@ -132,19 +129,30 @@ class AbstractBase(abc.ABC):
 
         if cls.__dict__.get("__autocall_init__", False):
 
-            def __init__(self, *args, _func=get("__init__"), **kws):  # type: ignore[no-untyped-def]
+            def __init__(self, *args: Any, _func: Callable[..., Any] = get("__init__"),  # type: ignore[no-untyped-def]
+                         **kws: Any) -> Any:
 
                 _func(self, *args, **kws)  # type: ignore[unused-ignore]
 
                 if getattr(self, "__autocall_init__", False):
+                    if "__autumn_inited_list" not in self.__dict__:
+                        self.__dict__["__autumn_inited_list"] = [type(self)]
+                    __autumn_inited_list = self.__dict__["__autumn_inited_list"]
 
-                    i = self.__calling_super__
+                    top = len(__autumn_inited_list) == 1
 
-                    try:
-                        i.__init__(self, *args, **kws)
-                    except TypeError as _:
-                        if len(signature(i.__init__).parameters) == 1:
-                            i.__init__(self)
+                    for i in self.__calling_super__:
+                        if i in __autumn_inited_list:
+                            continue
+                        __autumn_inited_list.append(i)
+                        try:
+                            i.__init__(self, *args, **kws)
+                        except TypeError as _:
+                            if len(signature(i.__init__).parameters) == 1:
+                                i.__init__(self)
+
+                    if top:
+                        delattr(self, "__autumn_inited_list")
 
             __init__._wrapped_ = cls.__init__  # type: ignore[attr-defined]
             __init__.__autumn_handled_autoinit__ = True  # type: ignore[attr-defined]
