@@ -3,7 +3,8 @@ import unittest
 from typing import Any
 
 from Autumn import AbstractBase  # type: ignore[import-not-found]
-from Autumn.decorators import no_lock, allow_lock, disable_autoinit, only_self  # type: ignore[import-not-found]
+from Autumn.decorators import no_lock, allow_lock, disable_autoinit, only_self, \
+    use_as_hook  # type: ignore[import-not-found]
 
 
 class Test(unittest.TestCase):
@@ -100,9 +101,10 @@ class Test(unittest.TestCase):
             def build(self, **kwargs: Any) -> str:
                 return ""
 
-            def __init__(self) -> None:
+            def __init_hook__(self) -> None:
                 flags["base_called"].append(True)
 
+        @use_as_hook()
         class B(A):
 
             def __init__(self) -> None:
@@ -121,7 +123,7 @@ class Test(unittest.TestCase):
         self.assertEqual(flags["called_child"], [True])
         self.assertEqual(flags["called_grandchildren"], [True, True])
 
-    def test_base_autoinit_ignores_class_when_has_autocall_init(self):
+    def test_base_autoinit_ignores_class_when_has_autocall_init(self) -> None:
 
         flags = {
             "A-Called": False,
@@ -132,7 +134,7 @@ class Test(unittest.TestCase):
 
             __children_autoinit__ = True
 
-            def __init__(self):
+            def __init_hook__(self) -> None:
                 flags["A-Called"] = True
 
             def build(self, **kwargs: Any) -> str:
@@ -159,6 +161,7 @@ class Test(unittest.TestCase):
             "D-Called": []
         }
 
+        @use_as_hook()
         class A(AbstractBase):
             __children_autoinit__ = True
 
@@ -168,11 +171,13 @@ class Test(unittest.TestCase):
             def __init__(self) -> None:
                 flags["A-Called"].append(True)
 
+        @use_as_hook()
         class B(A):
 
             def __init__(self) -> None:
                 flags["B-Called"].append(True)
 
+        @use_as_hook()
         class C(B):
             __children_autoinit__ = True
 
@@ -236,7 +241,7 @@ class Test(unittest.TestCase):
             def build(self, **kwargs: Any) -> str:
                 return ""
 
-            def __init__(self, a):
+            def __init_hook__(self, a):
                 assert a == "test"
 
         self2 = self
@@ -261,7 +266,7 @@ class Test(unittest.TestCase):
         class A(AbstractBase):
             __children_autoinit__ = True
 
-            def __init__(self):
+            def __init_hook__(self):
                 order.append(A)
 
             def build(self, **kwargs: Any) -> str:
@@ -270,7 +275,7 @@ class Test(unittest.TestCase):
         class B(A):
             __children_autoinit__ = True
 
-            def __init__(self):
+            def __init_hook__(self):
                 order.append(B)
 
         changed_order = [False]
@@ -296,14 +301,14 @@ class Test(unittest.TestCase):
 
     def test_only_self_works(self):
 
+        @only_self
         class A(AbstractBase):  # type: ignore[misc]
 
             def build(self, **kwargs: Any) -> str: return ""
 
-            def __init__(self) -> None:
+            def __init_hook__(self) -> None:
                 assert self.b == "test"
 
-        @only_self
         class B(A):
 
             def __init__(self, b):

@@ -127,6 +127,22 @@ def only_self(cls: T | None = None) -> T:
 
     return cls
 
+def use_as_hook(name: str = "__init__") -> Callable[[T], T]:
+
+    if type(name) is not str:
+        raise ValueError(f"Expected str, but given {name}")
+
+    def meth(cls: T) -> T:
+
+        if not isclass(cls):
+            raise ValueError(f"Expected a class, but given {cls}")
+
+        setattr(cls, "__init_hook__", getattr(cls, name))
+
+        return cls
+
+    return meth
+
 def lock(boolean: bool) -> Callable[[T | None], T]:
     """
     A shorthand. It true, it will allow locking, if false, it won't be locked.
@@ -191,4 +207,5 @@ class Decorators:
         disable_autoinit: Callable[[T | None], T] = disable_autoinit
         enable_autoinit: Callable[[T | None], T] = enable_autoinit
         only_self: Callable[[T | None], T] = only_self
+        use_as_hook: Callable[[type], Callable[[T], T]] = use_as_hook
         autoinit: Callable[[bool], Callable[[T | None], T]] = autoinit

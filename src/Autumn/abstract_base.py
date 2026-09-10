@@ -128,9 +128,6 @@ class AbstractBase(abc.ABC):
 
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
 
-                if "__init__" not in cls.__dict__:
-                    cls2.__init__ = lambda self, *args, **kws: ...  # type: ignore[method-assign,assignment]
-
                 super(cls, cls2).__init_subclass__(**kw)  # type: ignore[unused-ignore]
 
             setattr(__init_subclass__, "__autumn_handled_autoinit__", True)
@@ -178,7 +175,7 @@ class AbstractBase(abc.ABC):
                 if i in __autumn_inited_list:
                     continue
                 __autumn_inited_list.append(i)
-                i.__init__(self, *arguments, **keyword_arguments)
+                i.__init_hook__(self, *arguments, **keyword_arguments)
 
             if top:
                 delattr(self, "__autumn_inited_list")
