@@ -122,6 +122,8 @@ class AbstractBase(abc.ABC):
 
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
 
+                if "__init__" not in cls.__dict__:
+                    cls2.__init__ = lambda self, *args, **kws: super(type(self), self).__init__(self, *args, **kws)  # type: ignore[call-arg]
                 super(cls, cls2).__init_subclass__(**kw)
 
             __init_subclass__.__autumn_handled_autoinit__ = True  # type: ignore[attr-defined]
