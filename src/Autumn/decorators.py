@@ -83,7 +83,7 @@ def disable_autoinit(meth: T | None = None) -> T:
     if not isroutine(meth):
         raise ValueError(f"Expected to modify __init__, given {meth}.")
 
-    meth.__no_auto__ = True  # type: ignore[attr-defined]
+    meth.__no_auto__ = True  # type: ignore[union-attr]
     return meth
 
 

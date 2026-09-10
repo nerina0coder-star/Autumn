@@ -23,9 +23,10 @@ class AbstractBase(abc.ABC):
                 if cls2 is cls:
                     raise RuntimeError(f"Cannot create class {cls.__name__}, class declared "
                                        "No New.")
+                # noinspection PySuperArguments
                 return super(cls, cls2).__new__(cls2)  # type: ignore[misc]
 
-            new.__autumn_no_new_handled = True  # type: ignore[attr-defined]
+            setattr(new, "__autumn_no_new_handled", True)
             cls.__new__ = new  # type: ignore[method-assign,assignment]
 
     @classmethod
@@ -111,29 +112,29 @@ class AbstractBase(abc.ABC):
             return out
 
         if cls.__dict__.get("__children_autoinit__", False):
-            def __init_subclass__(cls2,  # type: ignore[no-untyped-def]
-                                  _func=getcls("__init_subclass__"),
+            def __init_subclass__(cls2: type[AbstractBase],
+                                  _func: Callable[..., Any]=getcls("__init_subclass__"),
                                   **kw: Any) -> None:
                 if cls2.__dict__.get("__autocall_init__", True):
-                    cls2.__autocall_init__ = True
+                    setattr(cls2, "__autocall_init__", True)
 
                 if "__calling_super__" in cls2.__dict__: cls2.__dict__["__calling_super__"].append(cls)
-                else: cls2.__calling_super__ = [cls]
+                else: setattr(cls2, "__calling_super__", [cls])
 
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
 
                 if "__init__" not in cls.__dict__:
-                    cls2.__init__ = lambda self, *args, **kws: ...
-                super(cls, cls2).__init_subclass__(**kw)
+                    cls2.__init__ = lambda self, *args, **kws: ...  # type: ignore[method-assign,assignment]
+                super(cls, cls2).__init_subclass__(**kw)  # type: ignore[unused-ignore]
 
-            __init_subclass__.__autumn_handled_autoinit__ = True  # type: ignore[attr-defined]
+            setattr(__init_subclass__, "__autumn_handled_autoinit__", True)
             cls.__init_subclass__ = classmethod(__init_subclass__)  # type: ignore[assignment,arg-type]
 
         if cls.__dict__.get("__autocall_init__", False):
             if getattr(get("__init__"), "__no_auto__", False):
                 return
 
-            def __init__(self, *args: Any, _func: Callable[..., Any] = get("__init__"),  # type: ignore[no-untyped-def]
+            def __init__(self: AbstractBase, *args: Any, _func: Callable[..., Any] = get("__init__"),
                          **kws: Any) -> Any:
 
                 _func(self, *args, **kws)  # type: ignore[unused-ignore]
@@ -147,9 +148,11 @@ class AbstractBase(abc.ABC):
                 params = lambda *a, **kw: (args, kws)
 
                 if "__params_to_parent__" in self.__dict__:
-                    params = self.__params_to_parent__
+                    params = getattr(self, "__params_to_parent__")
 
-                for i in self.__calling_super__.copy():
+                calling_super = getattr(self, "__calling_super__").copy()
+
+                for i in calling_super:
 
                     called: tuple[tuple[Any, ...], dict[Any, Any]] = params(i, *args, **kws)  # type: ignore[no-untyped-call]
 
@@ -171,7 +174,7 @@ class AbstractBase(abc.ABC):
             __init__._wrapped_ = cls.__init__  # type: ignore[attr-defined]
             __init__.__autumn_handled_autoinit__ = True  # type: ignore[attr-defined]
 
-            cls.__init__ = __init__  # type: ignore[method-assign]
+            cls.__init__ = __init__  # type: ignore[assignment]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """
@@ -194,11 +197,11 @@ class AbstractBase(abc.ABC):
 
         if not "__signature__" in cls.__dict__:
             if "__init__" in cls.__dict__:
-                cls.__signature__ = signature(cls.__init__)  # type: ignore[attr-defined]
+                setattr(cls, "__signature__", signature(cls.__init__))
 
         cls.__handle_locking__()
 
-        cls.__already_handled__ = True  # type: ignore[attr-defined]
+        setattr(cls, "__already_handled__", True)
 
         super().__init_subclass__(**kwargs)
 
