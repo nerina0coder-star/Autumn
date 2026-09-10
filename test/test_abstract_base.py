@@ -226,3 +226,69 @@ class Test(unittest.TestCase):
         self.assertEqual(flags["B-Called"], [True])
         self.assertEqual(flags["C-Called"], [True, True])
         self.assertEqual(flags["D-Called"], [True])
+
+    def test_params_to_parent_works_when_doing_autoinit(self):
+
+        class A(AbstractBase):
+            __children_autoinit__ = True
+
+            def build(self, **kwargs: Any) -> str:
+                return ""
+
+            def __init__(self, a):
+                assert a == "test"
+
+        self2 = self
+
+        class B(A):
+            def __init__(self, b):
+                self.b = b
+
+            def __params_to_parent__(self, parent, *args, **kwargs):
+
+                self2.assertIs(parent, A)
+                self2.assertEqual(kwargs, {"b": self.b})
+
+                return tuple(), {"a": self.b}
+
+        B("test")
+
+    def test_calling_super_replacement_changes_the_init_order(self):
+
+        order = []
+
+        class A(AbstractBase):
+            __children_autoinit__ = True
+
+            def __init__(self):
+                order.append(A)
+
+            def build(self, **kwargs: Any) -> str:
+                return ""
+
+        class B(A):
+            __children_autoinit__ = True
+
+            def __init__(self):
+                order.append(B)
+
+        changed_order = [False]
+
+        class C(B):
+
+            def __init__(self):
+                if changed_order[0]:
+                    self.__calling_super__ = [B, A]
+                else:
+                    self.__calling_super__ = [A, B]
+                changed_order[0] = not changed_order[0]
+
+        C()
+
+        self.assertEqual(order, [A, B])
+
+        order.clear()
+
+        C()
+
+        self.assertEqual(order, [B, A])

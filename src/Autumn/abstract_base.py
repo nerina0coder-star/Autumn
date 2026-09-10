@@ -123,7 +123,7 @@ class AbstractBase(abc.ABC):
                 _func(cls2, **kw)  # type: ignore[unused-ignore]
 
                 if "__init__" not in cls.__dict__:
-                    cls2.__init__ = lambda self, *args, **kws: super(type(self), self).__init__(self, *args, **kws)  # type: ignore[call-arg]
+                    cls2.__init__ = lambda self, *args, **kws: ...
                 super(cls, cls2).__init_subclass__(**kw)
 
             __init_subclass__.__autumn_handled_autoinit__ = True  # type: ignore[attr-defined]
@@ -143,12 +143,23 @@ class AbstractBase(abc.ABC):
 
                     top = len(__autumn_inited_list) == 1
 
-                    for i in self.__calling_super__:
+                    params = lambda *a, **kw: (args, kws)
+
+                    if "__params_to_parent__" in self.__dict__:
+                        params = self.__params_to_parent__
+
+                    for i in self.__calling_super__.copy():
+
+                        called: tuple[tuple[Any, ...], dict[Any, Any]] = params(i, *args, **kws)  # type: ignore[no-untyped-call]
+
+                        arguments: tuple[Any, ...] = called[0]
+                        keyword_arguments: dict[Any, Any] = called[1]
+
                         if i in __autumn_inited_list:
                             continue
                         __autumn_inited_list.append(i)
                         try:
-                            i.__init__(self, *args, **kws)
+                            i.__init__(self, *arguments, **keyword_arguments)
                         except TypeError as _:
                             if len(signature(i.__init__).parameters) == 1:
                                 i.__init__(self)
