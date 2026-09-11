@@ -177,7 +177,7 @@ class AbstractTag(AbstractBase):
                     # But if we do "if val", it will be the same for a string, a list, etc.
                     all_.append(f' {attr}')
                     continue
-                all_.append(f' {attr}="{escape(str(val).replace("_", "-"))}"')
+                all_.append(f' {attr}="{escape(str(val))}"')
 
         all_.append(f">")
 
