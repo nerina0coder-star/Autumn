@@ -41,6 +41,9 @@ def _current_base():
 
 
 current_base = LocalProxy(_current_base)  # type: ignore
+"""
+The base currently used.
+"""
 
 
 class Base:
@@ -71,11 +74,21 @@ class Base:
 
     @property
     def extensions(self):
+        """
+        Returns the instances of the classes that classified themselves as extensions.
+
+        :return: A deepcopy of the extensions.
+        """
         with self._lock:
             return copy.deepcopy(self._extensions)
 
     @extensions.setter
     def extensions(self, value):
+        """
+        Classifies the given class as Extension.
+
+        :param value: The extension to classify.
+        """
         with self._lock:
             self._extensions.append(value)
 
@@ -87,27 +100,46 @@ class Base:
 
     @extensions.deleter
     def extensions(self):
+        """
+        Empties the current extension list.
+        """
         with self._lock:
             self._extensions.clear()
 
     @property
     def wrapped(self):
+        """
+        Returns all the wrapped classes, including but not limited to extensions.
+
+        :return: A deepcopy of the wrapped instances.
+        """
         with self._lock:
             return copy.deepcopy(self._wrapped)
 
     @wrapped.setter
     def wrapped(self, value):
+        """
+        Adds the wrapped value to the wrapped list. (Value must be an instance)
+        """
+
         with self._lock:
+            if not getattr(type(value), "_wrapped_with_autumn_base_ctrl", False):
+                raise ValueError(f"Expected a wrapped class, given {value}.")
             self._wrapped.append(value)
 
     @wrapped.deleter
     def wrapped(self):
+        """
+        Empties the current wrapped list.
+        """
+
         with self._lock:
             self._wrapped.clear()
 
     def read(self, attribute, function, *args, **kwargs):
         """
         Performs a read operation on the list.
+
         :param attribute: The attribute to read.
         :param function: get(getitem), index, copy, count, or range(slicing).
         :param args: The arguments to give to the function.
@@ -135,6 +167,7 @@ class Base:
     def write(self, attribute, function, *args, **kwargs):
         """
         Performs a limited write operation on the list.
+
         :param attribute: The attribute to write to.
         :param function: The function to call. extend, pop, or remove.
         :param args: The arguments to give to the function.
@@ -159,8 +192,9 @@ class Base:
     def ctrl(self, cls=None):
         """
         Wraps and controls the state of an unknown/not-internal class.
+
         :param cls: The class to wrap.
-        :return:
+        :return: The wrapped class.
         """
 
         if cls is None:
@@ -235,9 +269,16 @@ class Base:
         return cls
 
     def __enter__(self):
+        """
+        Enters a context to ensure if an error is raised, extensions exit gracefully.
+        In this context, current_base is this instance.
+        """
         _set_base(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exits the context. If an error is raised, all extensions will be notified.
+        """
         if exc_type:
             self._notify_extensions_of_exception(exception=exc_val)
         _remove_base()
@@ -251,6 +292,7 @@ class Base:
     def merge_new(self, other):
         """
         Merges self and other, resulting in a completely new base.
+
         :param other: The other base.
         :return: The new base.
         """
@@ -265,6 +307,7 @@ class Base:
     def merge(one, two, /):
         """
         Merges the two into one.
+
         :param one: The one to get all the data from two.
         :param two: The one to extract data from.
         :return: param "one".
@@ -302,6 +345,7 @@ class Base:
         """
         Owns the given class, that's owned by another Base.
         The class must already be wrapped with Autumn.
+
         :param cls: The class to own.
         :raises ValueError: If the class is not wrapped already.
         """
@@ -312,6 +356,7 @@ class Base:
     def _notify_extensions_of_exception(self, **kwargs):
         """
         (Internal) Used to notify extensions of an acquired exception.
+
         :param kwargs: The kwargs to give to each extension.
         :return:
         """
@@ -336,6 +381,9 @@ class Base:
                 self._lock.release()
 
     def __deepcopy__(self, memo):
+        """
+        Custom deepcopy to prevent Lock pickling errors.
+        """
         cls = self.__class__
         new = cls.__new__(cls)
 
