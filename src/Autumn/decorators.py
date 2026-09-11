@@ -22,6 +22,7 @@ def no_lock(meth: T | None = None) -> T:
     meth.__no_lock__ = True  # type: ignore[union-attr]
     return meth
 
+
 def allow_lock(meth: T | None = None) -> T:
     """
     Nullifies the effect of no_lock.
@@ -37,6 +38,7 @@ def allow_lock(meth: T | None = None) -> T:
 
     meth.__no_lock__ = False  # type: ignore[union-attr]
     return meth
+
 
 def allow_unsafe(meth: T | None = None) -> T:
     """
@@ -54,6 +56,7 @@ def allow_unsafe(meth: T | None = None) -> T:
 
     meth.__allow_unsafe__ = True  # type: ignore[union-attr]
     return meth
+
 
 def make_safe(meth: T | None = None) -> T:
     """
@@ -81,12 +84,13 @@ def disable_autoinit(meth: T | None = None) -> T:
     :return: The decorated method.
     """
     if meth is None:
-        return disable_autoinit   # type: ignore[return-value]
+        return disable_autoinit  # type: ignore[return-value]
     if not isroutine(meth):
         raise ValueError(f"Expected to modify __init__, given {meth}.")
 
     meth.__no_autoinit__ = True  # type: ignore[union-attr]
     return meth
+
 
 def enable_autoinit(meth: T | None = None) -> T:
     """
@@ -103,6 +107,7 @@ def enable_autoinit(meth: T | None = None) -> T:
 
     meth.__no_autoinit__ = False  # type: ignore[union-attr]
     return meth
+
 
 def only_self(cls: T | None = None) -> T:
     """
@@ -124,11 +129,21 @@ def only_self(cls: T | None = None) -> T:
         before(cls2, **kwargs)  # type: ignore[unused-ignore]
         if not hasattr(cls2, "__params_to_parent__"):
             setattr(cls2, "__params_to_parent__", (lambda self, *args, **kws: (tuple(), dict())))
+
     setattr(cls, "__init_subclass__", classmethod(init_subclass))  # type: ignore[arg-type]
 
     return cls
 
-def use_as_hook(name: str = "__init__") -> Callable[[T], T]:
+
+def use_as_hook(cls: None | T = None, *, /, name: str = "__init__") -> Callable[[T], T] | T:
+    """
+    Extracts the given function name and uses at `__init_hook__`.
+
+    :param name: The name of the function.
+    :param cls: If cls is None, it will proceed normally, returning a function/callable.
+        If not, it will call the method to be returned and returns the class.
+    :return: A callable that takes a class and returns it. Or the given cls.
+    """
 
     if type(name) is not str:
         raise ValueError(f"Expected str, but given {name}")
@@ -142,7 +157,11 @@ def use_as_hook(name: str = "__init__") -> Callable[[T], T]:
 
         return cls
 
+    if cls is not None:
+        return meth(cls)
+
     return meth
+
 
 def lock(boolean: bool) -> Callable[[T | None], T]:
     """
@@ -158,6 +177,7 @@ def lock(boolean: bool) -> Callable[[T | None], T]:
     else:
         return no_lock
 
+
 def safe(boolean: bool) -> Callable[[T | None], T]:
     """
     A shorthand. If true, this method will stay safe as default and will be wrapped,
@@ -172,6 +192,7 @@ def safe(boolean: bool) -> Callable[[T | None], T]:
     else:
         return allow_unsafe
 
+
 def autoinit(boolean: bool) -> Callable[[T | None], T]:
     """
     A shorthand. If true, this __init__ will sign the class as `auto init`-following(parent's influence counts).
@@ -185,6 +206,7 @@ def autoinit(boolean: bool) -> Callable[[T | None], T]:
         return enable_autoinit
     else:
         return disable_autoinit
+
 
 class Decorators:
     """
