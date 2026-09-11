@@ -1,6 +1,7 @@
-import html
 import threading
 from typing import Literal, Any
+
+from markupsafe import escape
 
 from Autumn.Tag.Enums import Language
 from Autumn.Tag.Meta import Title
@@ -79,7 +80,7 @@ class Page(AbstractBase):
             head.tags.extend([Title(self.name), *self._requirements])
 
         out = ("<!DOCTYPE html>" +
-                f'<html lang="{html.escape(self.language)}" dir="{html.escape(self.direction)}">' +
+                f'<html lang="{escape(self.language)}" dir="{escape(self.direction)}">' +
                 "".join(tag.build(dynamic, **build_kwargs) for tag in self._tags) +
                 "</html>")
 
