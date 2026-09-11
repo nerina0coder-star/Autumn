@@ -6,6 +6,7 @@ from warnings import warn
 from markupsafe import escape
 
 from Autumn.abstract_base import AbstractBase
+from Autumn.decorators import no_lock
 
 
 class AbstractTag(AbstractBase):
@@ -223,6 +224,7 @@ class AbstractTag(AbstractBase):
 
         return parent
 
+    @no_lock
     def __rmul__(self, other):
         """
         Same as tag * other.
@@ -258,6 +260,7 @@ class AbstractTag(AbstractBase):
         self.tags.append(other)
         return self
 
+    @no_lock
     def __rrshift__(self, other):
         """
         Same as self << other.
