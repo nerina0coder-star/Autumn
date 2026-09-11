@@ -18,7 +18,7 @@ include = [
 [project]
 
 name = "autumn-core"
-version = "1.3.0"
+version = "1.4.0"
 description = "Autumn - Build CSS and HTML right in your backend"
 requires-python = "~=3.12"
 license = "MIT"
