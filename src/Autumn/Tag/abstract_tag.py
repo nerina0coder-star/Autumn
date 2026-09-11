@@ -380,7 +380,7 @@ class AbstractTag(AbstractBase):
                 for i in range(len(parent), len(lst) + len(parent)):
                     parent[i] = lst[i]
             else:
-                parent = copy.deepcopy(lst)
+                parent = (*parent, *lst)
             # -----------------------------
         else:
             parent = copy.deepcopy(lst)
