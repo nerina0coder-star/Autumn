@@ -59,7 +59,7 @@ class AbstractStyle(AbstractBase):
                 self._cache.append(result)
             return result
 
-        out = []
+        out: list[str] = []
 
         if self.name:
             for name in self.name[0:-1]:
@@ -85,7 +85,7 @@ class AbstractStyle(AbstractBase):
 
         out.append("}")
 
-
+        out: str = "".join(out)
 
         if not self._cache and not self.dynamic and cache_if_possible:
             self._cache.append(out)

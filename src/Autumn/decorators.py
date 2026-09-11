@@ -117,14 +117,14 @@ def only_self(cls: T | None = None) -> T:
     if not isclass(cls):
         raise ValueError(f"expected to modify a class, given {cls}")
 
-    before = cls.__init_subclass__.__func__
+    before = getattr(cls.__init_subclass__, "__func__")
 
     @wraps(before)
     def init_subclass(cls2: Any, **kwargs: Any) -> None:
         before(cls2, **kwargs)  # type: ignore[unused-ignore]
         if not hasattr(cls2, "__params_to_parent__"):
             setattr(cls2, "__params_to_parent__", (lambda self, *args, **kws: (tuple(), dict())))
-    setattr(cls, "__init_subclass__", classmethod(init_subclass))
+    setattr(cls, "__init_subclass__", classmethod(init_subclass))  # type: ignore[arg-type]
 
     return cls
 

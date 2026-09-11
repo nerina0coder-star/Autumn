@@ -2,9 +2,8 @@ import abc
 import copy
 import threading
 from collections.abc import Callable
-from functools import wraps, lru_cache
+from functools import wraps
 from inspect import signature, isroutine
-from types import MethodType
 from typing import Any
 
 
@@ -117,7 +116,7 @@ class AbstractBase(abc.ABC):
         if cls.__dict__.get("__children_autoinit__", False):
             @wraps(getcls("__init_subclass__"))
             def __init_subclass__(cls2: type[AbstractBase],
-                                  *args: Any,
+                                  *_args: Any,
                                   _func: Callable[..., Any]=getcls("__init_subclass__"),
                                   **kw: Any) -> None:
                 if cls2.__dict__.get("__autocall_init__", True):

@@ -15,6 +15,8 @@ class Test(unittest.TestCase):
 
         class Class(AbstractBase):
 
+            def build(self, **kwargs: Any) -> str: return ""
+
             @classmethod
             def meth(cls: Any) -> None:
                 classmeth_called.append(True)

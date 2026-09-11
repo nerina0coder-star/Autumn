@@ -351,6 +351,9 @@ class AbstractTag(AbstractBase):
         :param item: a class for instance check or an instance for literal check.
         :return: True or False.
         """
+        if not (isinstance(item, AbstractTag) or issubclass(item, AbstractTag) or isinstance(item, str)):
+            raise ValueError(f"expected (type of or instance of) AbstractTag, or str, but given {item}")
+
         if isclass(item):
             if issubclass(item, AbstractTag):
                 return any(issubclass(type(i), item) for i in self.tags)
