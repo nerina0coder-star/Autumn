@@ -96,6 +96,7 @@ class PageManager(AbstractBase):
     def pages(self) -> dict[str, Page]:
         """
         Returns a copy of all the pages.
+
         :return: The copy.
         """
         return self._pages.copy()

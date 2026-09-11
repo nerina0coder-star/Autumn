@@ -104,7 +104,7 @@ class Page(AbstractBase):
     @property
     def requirements(self) -> list[Cdn]:
         """
-        Returns a copy of the owning tags.
+        Returns a copy of the owning CDNs.
 
         :return: The copy.
         """
