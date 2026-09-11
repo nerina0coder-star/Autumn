@@ -117,13 +117,14 @@ def only_self(cls: T | None = None) -> T:
     if not isclass(cls):
         raise ValueError(f"expected to modify a class, given {cls}")
 
-    before = cls.__init_subclass__
+    before = cls.__init_subclass__.__func__
 
     @wraps(before)
     def init_subclass(cls2: Any, **kwargs: Any) -> None:
-        before(**kwargs)  # type: ignore[unused-ignore]
-        setattr(cls2, "__params_to_parent__", lambda: tuple([tuple(), dict()]))
-    setattr(cls, "__init_subclass__", classmethod(init_subclass))  # type: ignore[arg-type]
+        before(cls2, **kwargs)  # type: ignore[unused-ignore]
+        if not hasattr(cls2, "__params_to_parent__"):
+            setattr(cls2, "__params_to_parent__", (lambda self, *args, **kws: (tuple(), dict())))
+    setattr(cls, "__init_subclass__", classmethod(init_subclass))
 
     return cls
 
@@ -207,5 +208,5 @@ class Decorators:
         disable_autoinit: Callable[[T | None], T] = disable_autoinit
         enable_autoinit: Callable[[T | None], T] = enable_autoinit
         only_self: Callable[[T | None], T] = only_self
-        use_as_hook: Callable[[type], Callable[[T], T]] = use_as_hook
+        use_as_hook: Callable[[str], Callable[[T], T]] = use_as_hook
         autoinit: Callable[[bool], Callable[[T | None], T]] = autoinit

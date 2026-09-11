@@ -304,12 +304,17 @@ class Test(unittest.TestCase):
 
     def test_only_self_works(self):
 
+        called = []
+
         @only_self
         class A(AbstractBase):  # type: ignore[misc]
+
+            __children_autoinit__ = True
 
             def build(self, **kwargs: Any) -> str: return ""
 
             def __init_hook__(self) -> None:
+                called.append(True)
                 assert self.b == "test"
 
         class B(A):
@@ -318,3 +323,6 @@ class Test(unittest.TestCase):
                 self.b = b
 
         B("test")
+        self.assertTrue(hasattr(B, "__params_to_parent__"))
+        self.assertTrue(hasattr(B.__init__, "_wrapped_"))
+        self.assertEqual(called, [True])
