@@ -4,7 +4,7 @@ from Autumn.Tag.Enums.Meta import ScriptType
 
 class Script(AbstractTag):
     """
-    Represents an Script tag.
+    Represents a Script tag.
     """
 
     def __init__(
