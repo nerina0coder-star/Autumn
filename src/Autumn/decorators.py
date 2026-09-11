@@ -94,7 +94,7 @@ def disable_autoinit(meth: T | None = None) -> T:
 
 def enable_autoinit(meth: T | None = None) -> T:
     """
-    Nullifies the effect of disable_amro.
+    Nullifies the effect of disable_autoinit.
 
     :param meth: The method that was decorated with disable_autoinit.
     :return: The changed method.
@@ -135,7 +135,7 @@ def only_self(cls: T | None = None) -> T:
     return cls
 
 
-def use_as_hook(cls: None | T = None, *, /, name: str = "__init__") -> Callable[[T], T] | T:
+def use_as_hook(cls: None | T = None, /, *, name: str = "__init__") -> Callable[[T], T] | T:
     """
     Extracts the given function name and uses at `__init_hook__`.
 
