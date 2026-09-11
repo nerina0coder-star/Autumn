@@ -1,7 +1,8 @@
 import copy
 import threading
 from contextvars import ContextVar
-from inspect import isroutine
+from functools import wraps
+from inspect import isroutine, signature
 from warnings import warn
 
 from werkzeug.local import LocalProxy
@@ -145,7 +146,7 @@ class Base:
         :param args: The arguments to give to the function.
         :param kwargs: The keyword arguments to give to the function.
         :return: The result of the read operation.
-        """
+        """ # TODO: Remove this completely, deepcopy is already enough.
 
         attribute = "_" + attribute
 
@@ -173,7 +174,7 @@ class Base:
         :param args: The arguments to give to the function.
         :param kwargs: The keyword arguments to give to the function.
         :return: The result of the called function.
-        """
+        """ # TODO: Remove and replace this with something better.
 
         attribute = "_" + attribute
 
@@ -204,6 +205,7 @@ class Base:
 
         last_self = getattr(cls, "__init__", mock_callable)
 
+        @wraps(last_self)
         def init(self_, *args, **kwargs):
             if hasattr(self, "__class__"):
                 base: Base = type(self_).__autumn_base__
@@ -228,6 +230,8 @@ class Base:
                 base._notify_extensions_of_exception(instance=self_, exception=e, args=args, kwargs=kwargs)
                 raise
 
+        init.__signature__ = signature(last_self)
+
         for i, j in cls.__dict__.items():
 
             if i in ["__new__", "__init__",
@@ -245,6 +249,7 @@ class Base:
             if isinstance(j, staticmethod):
                 continue
 
+            @wraps(j)
             def out(self_, *args, _autumn_func=j, **kwargs):
                 try:
                     return _autumn_func(self_, *args, **kwargs)
@@ -255,6 +260,8 @@ class Base:
                         base: Base = self_.__autumn_base__
                     base._notify_extensions_of_exception(instance=self_, exception=e, args=args, kwargs=kwargs)
                     raise
+
+            out.__signature__ = signature(j)
 
             if isinstance(j, classmethod):
                 setattr(cls, i, classmethod(out))
