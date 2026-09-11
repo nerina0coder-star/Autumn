@@ -70,9 +70,12 @@ class Page(AbstractBase):
         self.before_build(**build_kwargs)
 
         head: Head | None = next(filter(lambda tag: isinstance(tag, Head), self._tags), None) # type: ignore
+
         if head is None:
-            self._tags.insert(0, Head(Title(self.name), *self._requirements))
-        else:
+            head = Head()
+            self._tags.insert(0, head)
+
+        with head._lock:
             head.tags.extend([Title(self.name), *self._requirements])
 
         out = ("<!DOCTYPE html>" +
