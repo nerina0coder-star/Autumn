@@ -5,6 +5,7 @@ from warnings import warn
 
 from markupsafe import escape
 
+from Autumn.Naming.identifier import Identifier
 from Autumn.abstract_base import AbstractBase
 from Autumn.decorators import no_lock
 
@@ -32,7 +33,7 @@ class AbstractTag(AbstractBase):
 
         if not (hasattr(self, "tags") and isinstance(self.tags, list)):
             self.tags = []
-        if not (hasattr(self, "identifier") and isinstance(self.identifier, str)):
+        if not (hasattr(self, "identifier") and isinstance(self.identifier, (str, Identifier))):
             self.identifier = None
         if not (hasattr(self, "classes") and isinstance(self.classes, list)):
             self.classes = []
@@ -268,6 +269,18 @@ class AbstractTag(AbstractBase):
         :return: Self, for chaining operations.
         """
         return self << other
+
+    @no_lock
+    def __rshift__(self, other):
+        """
+        Same as other << self.
+
+        :param other: An AbstractTag.
+        :return: Self, for chaining operations.
+        """
+        if not isinstance(other, AbstractTag):
+            raise NotImplementedError
+        return other << self
 
     def __sub__(self, other):
         """
