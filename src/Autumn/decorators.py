@@ -230,5 +230,5 @@ class Decorators:
         disable_autoinit: Callable[[T | None], T] = disable_autoinit
         enable_autoinit: Callable[[T | None], T] = enable_autoinit
         only_self: Callable[[T | None], T] = only_self
-        use_as_hook: Callable[[str], Callable[[T], T]] = use_as_hook
+        use_as_hook: Callable[[None | T, str], Callable[[T], T] | T] = use_as_hook  # type: ignore[assignment]
         autoinit: Callable[[bool], Callable[[T | None], T]] = autoinit
