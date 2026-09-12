@@ -328,3 +328,15 @@ class Test(unittest.TestCase):
         self.assertTrue(hasattr(B, "__params_to_parent__"))
         self.assertTrue(hasattr(B.__init__, "_wrapped_"))
         self.assertEqual(called, [True])
+
+    def test_no_new_prevents_calling_new(self):
+
+        class A(AbstractBase):
+            __no_new__ = True
+
+            def build(self, **kwargs: Any) -> str: return ""
+
+        with self.assertRaises(RuntimeError,
+                               msg="Cannot create class A, class declared "
+                               "No New."):
+            A()
